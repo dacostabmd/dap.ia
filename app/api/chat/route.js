@@ -1,5 +1,3 @@
-import { resolveAnswer } from "@/lib/answers";
-
 // POST /api/chat  ->  { reply: string, sources: string[] }
 export async function POST(req) {
   try {
