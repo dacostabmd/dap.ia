@@ -5,7 +5,6 @@ export default function Hero() {
   return (
     <section className="relative overflow-hidden" style={{ background: "#060f17" }}>
       <Grainient
-        className="absolute inset-0 z-0"
         color1="#122a3d"
         color2="#0a1924"
         color3="#060f17"

@@ -123,12 +123,14 @@ export default function Grainient({
   color1 = "#FF9FFC",
   color2 = "#5227FF",
   color3 = "#B497CF",
-  className = "",
 }) {
   const containerRef = useRef(null);
 
   useEffect(() => {
-    const container = containerRef.current;
+    const anchor = containerRef.current;
+    if (!anchor) return;
+    // Monta o canvas no elemento pai (section/footer) para cobri-lo inteiro
+    const container = anchor.parentElement;
     if (!container) return;
 
     const renderer = new Renderer({
@@ -140,9 +142,13 @@ export default function Grainient({
 
     const gl = renderer.gl;
     const canvas = gl.canvas;
+    // Canvas cobre o pai inteiro como camada de fundo
+    canvas.style.position = "absolute";
+    canvas.style.inset = "0";
     canvas.style.width = "100%";
     canvas.style.height = "100%";
     canvas.style.display = "block";
+    canvas.style.zIndex = "0";
     container.appendChild(canvas);
 
     const geometry = new Triangle(gl);
@@ -236,7 +242,9 @@ export default function Grainient({
   }, []);
 
   useEffect(() => {
-    const container = containerRef.current;
+    const anchor = containerRef.current;
+    if (!anchor) return;
+    const container = anchor.parentElement;
     if (!container) return;
     const ctx = ctxMap.get(container);
     if (!ctx) return;
@@ -270,10 +278,5 @@ export default function Grainient({
     centerX, centerY, zoom, color1, color2, color3,
   ]);
 
-  return (
-    <div
-      ref={containerRef}
-      className={`relative h-full w-full overflow-hidden ${className}`.trim()}
-    />
-  );
+  return <div ref={containerRef} style={{ display: "none" }} />;
 }
