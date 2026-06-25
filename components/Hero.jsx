@@ -1,13 +1,28 @@
 import Chat from "@/components/Chat";
+import Grainient from "@/components/Grainient";
 
 export default function Hero() {
   return (
-    <section
-      className="relative overflow-hidden"
-      style={{ background: "radial-gradient(120% 120% at 80% 0%,#122a3d 0%,#0a1924 55%,#060f17 100%)" }}
-    >
+    <section className="relative overflow-hidden" style={{ background: "#060f17" }}>
+      <Grainient
+        className="absolute inset-0 z-0"
+        color1="#122a3d"
+        color2="#0a1924"
+        color3="#060f17"
+        timeSpeed={0.15}
+        warpStrength={0.6}
+        warpFrequency={3.0}
+        warpAmplitude={80.0}
+        rotationAmount={300.0}
+        grainAmount={0.04}
+        grainScale={1.5}
+        contrast={1.2}
+        saturation={0.7}
+        zoom={0.85}
+        blendAngle={35.0}
+      />
       {/* brand strip (sem navbar) */}
-      <div className="relative mx-auto flex max-w-[1200px] items-center justify-between gap-5 px-7 pt-6">
+      <div className="relative z-10 mx-auto flex max-w-[1200px] items-center justify-between gap-5 px-7 pt-6">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="https://dapadvocacia.com.br/wp-content/uploads/2026/04/dap-newlogo-large-scaled.png"
@@ -25,7 +40,7 @@ export default function Hero() {
         </a>
       </div>
 
-      <div className="relative mx-auto grid max-w-[1200px] grid-cols-1 items-center gap-14 px-7 pb-[84px] pt-[54px] lg:grid-cols-[1.05fr_.95fr]">
+      <div className="relative z-10 mx-auto grid max-w-[1200px] grid-cols-1 items-center gap-14 px-7 pb-[84px] pt-[54px] lg:grid-cols-[1.05fr_.95fr]">
         <div>
           <div className="mb-[26px] inline-flex items-center gap-[9px] rounded-full border border-[rgba(201,168,106,.4)] px-[15px] py-[7px]">
             <span className="h-[6px] w-[6px] rounded-full bg-[#5fc28a] shadow-[0_0_0_3px_rgba(95,194,138,.18)]" />
