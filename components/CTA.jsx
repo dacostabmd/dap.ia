@@ -13,7 +13,7 @@ export default function CTA() {
         <div className="flex flex-wrap justify-center gap-[14px]">
           <a
             href="#chat"
-            className="rounded-[9px] bg-navy px-[30px] py-[15px] text-[15px] font-semibold text-white transition-[transform,background] duration-200 hover:-translate-y-[3px] hover:scale-[1.02] hover:bg-navy2"
+            className="cursor-pointer rounded-[9px] bg-navy px-[30px] py-[15px] text-[15px] font-semibold text-white transition-[transform,background] duration-200 ease-out hover:-translate-y-[3px] hover:scale-[1.02] hover:bg-navy2"
           >
             Conversar com a DAP.IA
           </a>
@@ -21,7 +21,7 @@ export default function CTA() {
             href="http://wa.me/552120187918"
             target="_blank"
             rel="noreferrer"
-            className="rounded-[9px] border border-[rgba(15,34,51,.16)] bg-white px-[26px] py-[15px] text-[15px] font-semibold text-navy transition hover:-translate-y-[3px] hover:border-gold"
+            className="cursor-pointer rounded-[9px] border border-[rgba(15,34,51,.16)] bg-white px-[26px] py-[15px] text-[15px] font-semibold text-navy transition-[transform,border-color] duration-200 ease-out hover:-translate-y-[3px] hover:border-gold"
           >
             WhatsApp · (21) 2018-7918
           </a>

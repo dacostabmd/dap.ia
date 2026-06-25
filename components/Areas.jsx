@@ -14,9 +14,9 @@ export default function Areas() {
         {AREAS.map((a) => (
           <div
             key={a.t}
-            className="group relative overflow-hidden rounded-[14px] border border-[rgba(15,34,51,.08)] bg-white p-6 transition-[transform,box-shadow,border-color,background] duration-[400ms] ease-[cubic-bezier(.34,1.56,.64,1)] hover:-translate-y-[9px] hover:border-gold hover:bg-[linear-gradient(165deg,#fff_58%,#fbf4e2)] hover:shadow-[0_26px_48px_rgba(6,15,23,.16)]"
+            className="group relative cursor-pointer overflow-hidden rounded-[14px] border border-[rgba(15,34,51,.08)] bg-white p-6 transition-all duration-500 ease-in-out hover:-translate-y-[9px] hover:border-gold hover:bg-[linear-gradient(165deg,#fff_58%,#fbf4e2)] hover:shadow-[0_26px_48px_rgba(6,15,23,.16)]"
           >
-            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-[10px] bg-navy font-serif text-[19px] font-bold text-gold transition-[transform,background,color] duration-[400ms] ease-[cubic-bezier(.34,1.56,.64,1)] group-hover:-translate-y-[3px] group-hover:scale-[1.08] group-hover:bg-gold group-hover:text-navy">
+            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-[10px] bg-navy font-serif text-[19px] font-bold text-gold transition-all duration-500 ease-in-out group-hover:-translate-y-[3px] group-hover:scale-[1.08] group-hover:bg-gold group-hover:text-navy">
               {a.k}
             </div>
             <h3 className="m-0 mb-[7px] font-serif text-[17px] font-semibold text-navy">{a.t}</h3>

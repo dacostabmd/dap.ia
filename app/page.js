@@ -10,8 +10,8 @@ export default function Home() {
   return (
     <main className="overflow-x-hidden">
       <Hero />
-      <ComoFunciona />
       <DireitosCarousel />
+      <ComoFunciona />
       <Areas />
       <Confianca />
       <CTA />

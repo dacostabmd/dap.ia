@@ -2,7 +2,7 @@
 export async function POST(req) {
   try {
     const { message } = await req.json();
-    const apiUrl = process.env.RAG_API_URL || "https://dap-api-988622096584.southamerica-east1.run.app/webhook/chat-ia";
+    const apiUrl = process.env.RAG_API_URL || "http://localhost:8000/webhook/chat-ia";
     const apiKey = process.env.RAG_API_KEY;
 
     console.log(`Forwarding chat message to external RAG API: ${apiUrl}`);

@@ -32,7 +32,7 @@ export default function Hero() {
           href="http://wa.me/552120187918"
           target="_blank"
           rel="noreferrer"
-          className="inline-flex items-center gap-[9px] rounded-full border border-[rgba(201,168,106,.4)] px-[17px] py-[9px] transition hover:-translate-y-px hover:border-gold hover:bg-[rgba(201,168,106,.12)]"
+          className="inline-flex cursor-pointer items-center gap-[9px] rounded-full border border-[rgba(201,168,106,.4)] px-[17px] py-[9px] transition-[transform,border-color,background] duration-200 ease-out hover:-translate-y-px hover:border-gold hover:bg-[rgba(201,168,106,.12)]"
         >
           <span className="h-[7px] w-[7px] rounded-full bg-[#5fc28a] shadow-[0_0_0_3px_rgba(95,194,138,.18)]" />
           <span className="font-mono text-[12px] tracking-[.6px] text-gold">(21) 2018-7918</span>
@@ -59,13 +59,13 @@ export default function Hero() {
           <div className="flex flex-wrap items-center gap-[14px]">
             <a
               href="#chat"
-              className="rounded-[9px] bg-gold px-7 py-[15px] text-[15px] font-semibold tracking-[.2px] text-navy shadow-[0_10px_30px_rgba(201,168,106,.22)] transition-[transform,background,box-shadow] duration-200 hover:-translate-y-[3px] hover:scale-[1.03] hover:bg-gold2 hover:shadow-[0_18px_40px_rgba(201,168,106,.36)]"
+              className="cursor-pointer rounded-[9px] bg-gold px-7 py-[15px] text-[15px] font-semibold tracking-[.2px] text-navy shadow-[0_10px_30px_rgba(201,168,106,.22)] transition-all duration-300 ease-in-out hover:-translate-y-[3px] hover:scale-[1.03] hover:bg-gold2 hover:shadow-[0_18px_40px_rgba(201,168,106,.36)]"
             >
               Conversar agora
             </a>
             <a
               href="#direitos"
-              className="rounded-[9px] border border-white/20 px-[22px] py-[15px] text-[15px] font-medium text-white transition hover:-translate-y-0.5 hover:border-[rgba(201,168,106,.6)] hover:bg-white/[.04]"
+              className="cursor-pointer rounded-[9px] border border-white/20 px-[22px] py-[15px] text-[15px] font-medium text-white transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:border-[rgba(201,168,106,.6)] hover:bg-white/[.04]"
             >
               Conheça seus direitos
             </a>

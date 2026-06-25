@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Grainient from "@/components/Grainient";
 import { SLIDES } from "@/lib/data";
 
 const DURATION = 6500;
@@ -42,20 +43,19 @@ export default function DireitosCarousel() {
   return (
     <section
       id="direitos"
-      className="relative mt-14 overflow-hidden"
-      style={{ background: "radial-gradient(120% 130% at 12% 0%,#122a3d 0%,#0a1924 58%,#060f17 100%)" }}
+      className="bg-[#f8f7f4]"
     >
-      <div className="relative mx-auto max-w-[1200px] px-7 pb-[90px] pt-[86px]">
+      <div className="mx-auto max-w-[1200px] px-7 pb-[90px] pt-[86px]">
         {/* header + arrows */}
         <div className="mb-[34px] flex flex-wrap items-end justify-between gap-7">
           <div className="max-w-[640px]">
             <span className="font-mono text-[11px] uppercase tracking-[2.6px] text-gold">Conheça seus direitos</span>
-            <h2 className="m-0 mt-[14px] font-serif text-[40px] font-semibold leading-[1.12] tracking-[-.5px] text-white">
+            <h2 className="m-0 mt-[14px] font-serif text-[40px] font-semibold leading-[1.12] tracking-[-.5px] text-navy">
               Você tem mais direitos do que imagina
             </h2>
-            <p className="m-0 mt-[14px] text-[16px] leading-[1.6] text-white/[.66]">
-              Da <strong className="font-semibold text-white">busca e apreensão</strong> do seu veículo aos{" "}
-              <strong className="font-semibold text-white">juros abusivos</strong> do banco — entenda o que a lei garante
+            <p className="m-0 mt-[14px] text-[16px] leading-[1.6] text-[#5c6b76]">
+              Da <strong className="font-semibold text-navy">busca e apreensão</strong> do seu veículo aos{" "}
+              <strong className="font-semibold text-navy">juros abusivos</strong> do banco — entenda o que a lei garante
               e pergunte à DAP.IA.
             </p>
           </div>
@@ -63,16 +63,16 @@ export default function DireitosCarousel() {
             <button
               onClick={() => go(slide - 1)}
               aria-label="Anterior"
-              className="flex h-[50px] w-[50px] items-center justify-center rounded-full border border-[rgba(201,168,106,.4)] text-[20px] text-gold transition hover:-translate-x-[3px] hover:border-gold hover:bg-[rgba(201,168,106,.14)]"
+              className="flex h-[50px] w-[50px] cursor-pointer items-center justify-center rounded-full border border-[rgba(201,168,106,.4)] text-[20px] text-gold transition-[transform,background,border-color] duration-200 ease-out hover:-translate-x-[3px] hover:border-gold hover:bg-[rgba(201,168,106,.14)]"
             >
-              ←
+              <span className="pb-[2px]">←</span>
             </button>
             <button
               onClick={() => go(slide + 1)}
               aria-label="Próximo"
-              className="flex h-[50px] w-[50px] items-center justify-center rounded-full border border-[rgba(201,168,106,.4)] bg-gold text-[20px] text-navy transition hover:translate-x-[3px] hover:bg-gold2"
+              className="flex h-[50px] w-[50px] cursor-pointer items-center justify-center rounded-full border border-[rgba(201,168,106,.4)] bg-gold text-[20px] text-navy transition-[transform,background] duration-200 ease-out hover:translate-x-[3px] hover:bg-gold2"
             >
-              →
+              <span className="pb-[2px]">→</span>
             </button>
           </div>
         </div>
@@ -81,10 +81,26 @@ export default function DireitosCarousel() {
         <div
           onMouseEnter={() => (paused.current = true)}
           onMouseLeave={() => (paused.current = false)}
-          className="overflow-hidden rounded-[22px] border border-[rgba(201,168,106,.18)]"
+          className="relative overflow-hidden rounded-[22px] border border-[rgba(15,34,51,.1)] bg-navy"
         >
+          <Grainient
+            color1="#122a3d"
+            color2="#0a1924"
+            color3="#060f17"
+            timeSpeed={0.12}
+            warpStrength={0.5}
+            warpFrequency={2.8}
+            warpAmplitude={90.0}
+            rotationAmount={250.0}
+            grainAmount={0.045}
+            grainScale={1.5}
+            contrast={1.15}
+            saturation={0.6}
+            zoom={0.88}
+            blendAngle={20.0}
+          />
           <div
-            className="flex transition-transform duration-[650ms] ease-[cubic-bezier(.65,0,.18,1)]"
+            className="relative z-10 flex transition-transform duration-[650ms] ease-[cubic-bezier(.65,0,.18,1)]"
             style={{ transform: `translateX(-${slide * 100}%)` }}
           >
             {SLIDES.map((s, i) => {
@@ -93,7 +109,6 @@ export default function DireitosCarousel() {
                 <div
                   key={s.title}
                   className="min-w-0 shrink-0 grow-0 basis-full p-[50px_52px]"
-                  style={{ background: "linear-gradient(165deg,rgba(255,255,255,.07),rgba(255,255,255,.015))" }}
                 >
                   <div
                     className="grid grid-cols-1 items-center gap-[46px] lg:grid-cols-[1.15fr_.85fr]"
@@ -128,7 +143,7 @@ export default function DireitosCarousel() {
                       </div>
                       <button
                         onClick={() => ask(s.ask)}
-                        className="inline-flex items-center gap-[9px] rounded-[9px] border border-gold px-[22px] py-[13px] text-[14px] font-semibold text-gold transition hover:-translate-y-0.5 hover:scale-[1.02] hover:bg-gold hover:text-navy"
+                        className="inline-flex cursor-pointer items-center gap-[9px] rounded-[9px] border border-gold px-[22px] py-[13px] text-[14px] font-semibold text-gold transition-[transform,background,color] duration-200 ease-out hover:-translate-y-0.5 hover:scale-[1.02] hover:bg-gold hover:text-navy"
                       >
                         Perguntar à DAP.IA <span className="text-[16px]">→</span>
                       </button>
@@ -173,9 +188,9 @@ export default function DireitosCarousel() {
 
         {/* progress + dots */}
         <div className="mt-[26px] flex items-center gap-5">
-          <div className="h-[3px] flex-1 overflow-hidden rounded-full bg-white/10">
+          <div className="h-[3px] flex-1 overflow-hidden rounded-full bg-navy/10">
             <div
-              className="h-full rounded-full bg-[linear-gradient(90deg,#9c7b3f,#c9a86a)]"
+              className="h-full rounded-full bg-[linear-gradient(90deg,#9c7b3f,#c9a86a)] transition-[width] duration-100 ease-linear"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -185,8 +200,8 @@ export default function DireitosCarousel() {
                 key={i}
                 onClick={() => go(i)}
                 aria-label={`Slide ${i + 1}`}
-                className="h-[9px] rounded-full p-0 transition-[width,background] duration-300"
-                style={{ width: i === slide ? 30 : 9, background: i === slide ? "#c9a86a" : "rgba(255,255,255,.22)" }}
+                className="h-[9px] cursor-pointer rounded-full p-0 transition-[width,background] duration-300 ease-out"
+                style={{ width: i === slide ? 30 : 9, background: i === slide ? "#c9a86a" : "rgba(6,15,23,.18)" }}
               />
             ))}
           </div>

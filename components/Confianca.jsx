@@ -1,5 +1,6 @@
 import Reveal from "@/components/Reveal";
 import { DIFERENCIAIS } from "@/lib/data";
+import Grainient from "@/components/Grainient";
 
 const STATS = [
   { n: "17+", l: "anos de experiência" },
@@ -18,7 +19,23 @@ export default function Confianca() {
   return (
     <section id="confianca" className="mx-auto max-w-[1200px] px-7 pb-14 pt-16">
       <Reveal className="relative overflow-hidden rounded-[22px] bg-navy p-[48px_44px]">
-        <div className="relative grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
+        <Grainient
+          color1="#122a3d"
+          color2="#0a1924"
+          color3="#060f17"
+          timeSpeed={0.1}
+          warpStrength={0.4}
+          warpFrequency={2.5}
+          warpAmplitude={110.0}
+          rotationAmount={180.0}
+          grainAmount={0.04}
+          grainScale={1.5}
+          contrast={1.1}
+          saturation={0.5}
+          zoom={0.92}
+          blendAngle={10.0}
+        />
+        <div className="relative z-10 grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
           <div>
             <span className="font-mono text-[11px] uppercase tracking-[2.6px] text-gold">Por que confiar</span>
             <h2 className="m-0 mb-4 mt-[14px] font-serif text-[32px] font-semibold leading-[1.2] text-white">
@@ -43,7 +60,7 @@ export default function Confianca() {
             {SEALS.map((s) => (
               <div
                 key={s.alt}
-                className="flex aspect-[1.4] items-center justify-center rounded-[12px] border border-[rgba(201,168,106,.22)] bg-white p-[18px]"
+                className="flex aspect-[1.4] cursor-pointer items-center justify-center rounded-[12px] border border-[rgba(201,168,106,.22)] bg-white p-[18px] transition-[transform,box-shadow,border-color] duration-200 ease-out hover:-translate-y-[4px] hover:border-gold hover:shadow-[0_12px_28px_rgba(201,168,106,.18)]"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={s.src} alt={s.alt} className="max-h-full max-w-full object-contain" />
@@ -52,7 +69,7 @@ export default function Confianca() {
           </div>
         </div>
 
-        <div className="relative mt-[42px] grid grid-cols-2 gap-6 border-t border-white/10 pt-[34px] md:grid-cols-4">
+        <div className="relative z-10 mt-[42px] grid grid-cols-2 gap-6 border-t border-white/10 pt-[34px] md:grid-cols-4">
           {DIFERENCIAIS.map((d) => (
             <div key={d.t}>
               <div className="mb-[6px] font-serif text-[16px] font-semibold text-white">{d.t}</div>
