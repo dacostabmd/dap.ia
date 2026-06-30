@@ -14,7 +14,7 @@ export default function Areas() {
         {AREAS.map((a) => (
           <div
             key={a.t}
-            className="group relative cursor-pointer overflow-hidden rounded-[14px] border border-[rgba(15,34,51,.08)] bg-white p-6 transition-all duration-500 ease-in-out hover:-translate-y-[9px] hover:border-gold hover:bg-[linear-gradient(165deg,#fff_58%,#fbf4e2)] hover:shadow-[0_26px_48px_rgba(6,15,23,.16)]"
+            className="group relative cursor-pointer overflow-hidden rounded-[14px] border border-[rgba(15,34,51,.08)] bg-porcelain-grain p-6 transition-all duration-500 ease-in-out hover:-translate-y-[9px] hover:border-gold hover:bg-[linear-gradient(165deg,#ece8de_58%,#f0ddb8)] hover:shadow-[0_26px_48px_rgba(6,15,23,.16)]"
           >
             <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-[10px] bg-navy font-serif text-[19px] font-bold text-gold transition-all duration-500 ease-in-out group-hover:-translate-y-[3px] group-hover:scale-[1.08] group-hover:bg-gold group-hover:text-navy">
               {a.k}

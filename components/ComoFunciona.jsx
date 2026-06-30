@@ -14,12 +14,6 @@ const STEPS = [
     d: "O motor RAG recupera os trechos mais relevantes da legislação e dos guias jurídicos da DAP, garantindo respostas ancoradas em referências reais.",
     dark: true,
   },
-  {
-    n: "03",
-    t: "Resposta com fonte",
-    d: "Você recebe uma orientação clara, com as fontes citadas e a opção de encaminhar o caso a um advogado da área correspondente.",
-    dark: false,
-  },
 ];
 
 export default function ComoFunciona() {
@@ -52,7 +46,7 @@ export default function ComoFunciona() {
             mostra de onde tirou cada informação.
           </p>
         </Reveal>
-        <div className="grid grid-cols-1 gap-[22px] md:grid-cols-3">
+        <div className="mx-auto grid max-w-[800px] grid-cols-1 gap-[22px] md:grid-cols-2">
           {STEPS.map((s, i) => (
             <Reveal
               key={s.n}

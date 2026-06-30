@@ -60,7 +60,7 @@ export default function Confianca() {
             {SEALS.map((s) => (
               <div
                 key={s.alt}
-                className="flex aspect-[1.4] cursor-pointer items-center justify-center rounded-[12px] border border-[rgba(201,168,106,.22)] bg-white p-[18px] transition-[transform,box-shadow,border-color] duration-200 ease-out hover:-translate-y-[4px] hover:border-gold hover:shadow-[0_12px_28px_rgba(201,168,106,.18)]"
+                className="flex aspect-[1.4] cursor-pointer items-center justify-center rounded-[12px] border border-[rgba(201,168,106,.22)] bg-porcelain-grain p-[18px] transition-[transform,box-shadow,border-color] duration-200 ease-out hover:-translate-y-[4px] hover:border-gold hover:shadow-[0_12px_28px_rgba(201,168,106,.18)]"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={s.src} alt={s.alt} className="max-h-full max-w-full object-contain" />

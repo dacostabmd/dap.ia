@@ -10,7 +10,6 @@ export async function POST(req) {
     // Option 1: Use Google Cloud Text-to-Speech API (requires API key)
     const googleApiKey = process.env.GOOGLE_TTS_API_KEY;
     if (googleApiKey && googleApiKey !== "YOUR_GOOGLE_API_KEY") {
-      console.log("Using Google Cloud TTS");
       const googleResponse = await fetch(
         `https://texttospeech.googleapis.com/v1/text:synthesize?key=${googleApiKey}`,
         {
@@ -48,7 +47,6 @@ export async function POST(req) {
     const azureApiKey = process.env.AZURE_TTS_API_KEY;
     const azureRegion = process.env.AZURE_REGION;
     if (azureApiKey && azureRegion && azureApiKey !== "YOUR_AZURE_KEY") {
-      console.log("Using Azure Cognitive Services TTS");
       const ssml = `
         <speak version='1.0' xml:lang='pt-BR'>
           <voice name='pt-BR-AntonioNeural' xml:lang='pt-BR'>

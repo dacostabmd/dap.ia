@@ -1,5 +1,4 @@
 import Hero from "@/components/Hero";
-import ComoFunciona from "@/components/ComoFunciona";
 import DireitosCarousel from "@/components/DireitosCarousel";
 import Areas from "@/components/Areas";
 import Confianca from "@/components/Confianca";
@@ -11,10 +10,8 @@ export default function Home() {
     <main className="overflow-x-hidden">
       <Hero />
       <DireitosCarousel />
-      <ComoFunciona />
       <Areas />
       <Confianca />
-      <CTA />
       <Footer />
     </main>
   );

@@ -5,8 +5,6 @@ export async function POST(req) {
     const apiUrl = process.env.RAG_API_URL || "http://localhost:8000/webhook/chat-ia";
     const apiKey = process.env.RAG_API_KEY;
 
-    console.log(`Forwarding chat message to external RAG API: ${apiUrl}`);
-
     const headers = {
       "Content-Type": "application/json",
     };
@@ -31,7 +29,6 @@ export async function POST(req) {
     }
 
     const data = await res.json();
-    console.log("RAG API response data:", data);
 
     return Response.json({
       reply: data.resposta ?? data.reply ?? data.answer ?? data.text ?? data.response ?? "",
@@ -39,12 +36,9 @@ export async function POST(req) {
     });
   } catch (error) {
     console.error("Error communicating with external RAG API:", error);
-    // Retorna uma resposta amigável de erro para que o chatbot não quebre
     return Response.json({
       reply: "Desculpe, não consegui obter resposta do assistente no momento. Por favor, tente novamente mais tarde.",
       sources: [],
     });
   }
 }
-
-

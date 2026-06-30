@@ -3,7 +3,7 @@ import Reveal from "@/components/Reveal";
 export default function CTA() {
   return (
     <section className="mx-auto max-w-[1200px] px-7 pb-[90px] pt-5">
-      <Reveal className="rounded-[22px] border border-[rgba(201,168,106,.3)] bg-[linear-gradient(180deg,#fbfaf7,#f1eee6)] p-[56px_32px] text-center">
+      <Reveal className="rounded-[22px] border border-[rgba(201,168,106,.3)] bg-porcelain-grain p-[56px_32px] text-center">
         <h2 className="m-0 mb-[14px] font-serif text-[36px] font-semibold leading-[1.15] tracking-[-.4px] text-navy">
           Tire sua dúvida jurídica agora
         </h2>
@@ -21,7 +21,7 @@ export default function CTA() {
             href="http://wa.me/552120187918"
             target="_blank"
             rel="noreferrer"
-            className="cursor-pointer rounded-[9px] border border-[rgba(15,34,51,.16)] bg-white px-[26px] py-[15px] text-[15px] font-semibold text-navy transition-[transform,border-color] duration-200 ease-out hover:-translate-y-[3px] hover:border-gold"
+            className="cursor-pointer rounded-[9px] border border-[rgba(15,34,51,.16)] bg-porcelain-grain px-[26px] py-[15px] text-[15px] font-semibold text-navy transition-[transform,border-color] duration-200 ease-out hover:-translate-y-[3px] hover:border-gold"
           >
             WhatsApp · (21) 2018-7918
           </a>

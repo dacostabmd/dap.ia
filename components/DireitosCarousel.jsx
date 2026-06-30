@@ -43,7 +43,6 @@ export default function DireitosCarousel() {
   return (
     <section
       id="direitos"
-      className="bg-[#f8f7f4]"
     >
       <div className="mx-auto max-w-[1200px] px-7 pb-[90px] pt-[86px]">
         {/* header + arrows */}
@@ -63,14 +62,14 @@ export default function DireitosCarousel() {
             <button
               onClick={() => go(slide - 1)}
               aria-label="Anterior"
-              className="flex h-[50px] w-[50px] cursor-pointer items-center justify-center rounded-full border border-[rgba(201,168,106,.4)] text-[20px] text-gold transition-[transform,background,border-color] duration-200 ease-out hover:-translate-x-[3px] hover:border-gold hover:bg-[rgba(201,168,106,.14)]"
+              className="flex h-[50px] w-[50px] cursor-pointer items-center justify-center rounded-full border border-[rgba(201,168,106,.4)] text-[20px] text-gold transition-all duration-300 ease-out hover:-translate-x-[3px] hover:border-gold hover:bg-[rgba(201,168,106,.14)]"
             >
               <span className="pb-[2px]">←</span>
             </button>
             <button
               onClick={() => go(slide + 1)}
               aria-label="Próximo"
-              className="flex h-[50px] w-[50px] cursor-pointer items-center justify-center rounded-full border border-[rgba(201,168,106,.4)] bg-gold text-[20px] text-navy transition-[transform,background] duration-200 ease-out hover:translate-x-[3px] hover:bg-gold2"
+              className="flex h-[50px] w-[50px] cursor-pointer items-center justify-center rounded-full border border-[rgba(201,168,106,.4)] bg-gold text-[20px] text-navy transition-all duration-300 ease-out hover:translate-x-[3px] hover:bg-gold2"
             >
               <span className="pb-[2px]">→</span>
             </button>

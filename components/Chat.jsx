@@ -34,10 +34,7 @@ export default function Chat() {
     if (typeof window === "undefined") return;
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      console.warn("Speech Recognition API not supported");
-      return;
-    }
+    if (!SpeechRecognition) return;
 
     const recognition = new SpeechRecognition();
     recognition.lang = "pt-BR";
@@ -45,15 +42,8 @@ export default function Chat() {
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
 
-    recognition.onstart = () => {
-      console.log("Speech recognition started");
-      setIsListening(true);
-    };
-
-    recognition.onend = () => {
-      console.log("Speech recognition ended");
-      setIsListening(false);
-    };
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => setIsListening(false);
 
     recognition.onerror = (e) => {
       console.error("Speech recognition error:", e.error);
@@ -61,28 +51,17 @@ export default function Chat() {
     };
 
     recognition.onresult = (e) => {
-      let interim = "";
       for (let i = e.resultIndex; i < e.results.length; i++) {
-        const transcript = e.results[i][0].transcript;
         if (e.results[i].isFinal) {
-          setInput((prev) => prev + transcript + " ");
-        } else {
-          interim += transcript;
+          setInput((prev) => prev + e.results[i][0].transcript + " ");
         }
       }
     };
 
     recognitionRef.current = recognition;
-    console.log("Speech Recognition initialized successfully");
 
     return () => {
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.abort();
-        } catch (e) {
-          console.log("Error aborting recognition:", e.message);
-        }
-      }
+      try { recognitionRef.current?.abort(); } catch {}
     };
   }, []);
 
@@ -144,7 +123,6 @@ export default function Chat() {
     setIsSpeaking(true);
 
     try {
-      // Try to use AI-powered TTS API first
       const res = await fetch("/api/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -156,20 +134,12 @@ export default function Chat() {
         if (data.audioUrl) {
           const audio = new Audio(data.audioUrl);
           audio.onended = () => setIsSpeaking(false);
-          audio.onerror = () => {
-            console.log("Audio playback error, falling back to native synthesis");
-            useFallbackSynthesis(text);
-          };
-          audio.play().catch((err) => {
-            console.log("Could not play audio, using fallback:", err.message);
-            useFallbackSynthesis(text);
-          });
+          audio.onerror = () => useFallbackSynthesis(text);
+          audio.play().catch(() => useFallbackSynthesis(text));
           return;
         }
       }
-    } catch (error) {
-      console.log("TTS API error, using fallback:", error.message);
-    }
+    } catch {}
 
     useFallbackSynthesis(text);
   }, [useFallbackSynthesis]);
@@ -178,24 +148,18 @@ export default function Chat() {
     if (!recognitionRef.current) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
-        console.error("Speech Recognition API not supported in this browser. Try Chrome, Edge, or Safari.");
         alert("Seu navegador não suporta reconhecimento de voz. Use Chrome, Edge ou Safari.");
         return;
       }
-      console.error("Speech Recognition not yet initialized, retrying...");
-      // Force re-initialization on next render
       return;
     }
     try {
       if (isListening) {
-        console.log("Stopping recognition");
         recognitionRef.current.stop();
       } else {
-        console.log("Starting recognition");
         recognitionRef.current.start();
       }
-    } catch (error) {
-      console.error("Error toggling listening:", error.message);
+    } catch {
       setIsListening(false);
     }
   }, [isListening]);
@@ -235,7 +199,7 @@ export default function Chat() {
         }, 900)
       );
     },
-    [input, sending, typeOut, speakText]
+    [input, sending, typeOut]
   );
 
   return (
@@ -253,11 +217,11 @@ export default function Chat() {
             <div className="text-[11.5px] text-white/55">Online · responde em segundos</div>
           </div>
           <span className="rounded-md border border-[rgba(201,168,106,.35)] px-2 py-1 font-mono text-[9.5px] tracking-[1.2px] text-gold">
-            RAG
+            Desenvolvido por Caio Marques e Equipe de TI
           </span>
         </div>
 
-        <div className="bg-card">
+        <div className="bg-porcelain-grain">
 
         {/* messages */}
         <div ref={listRef} className="scrl flex h-[452px] flex-col gap-[14px] overflow-y-auto px-[18px] pb-[6px] pt-[18px]">
@@ -268,7 +232,7 @@ export default function Chat() {
                   IA
                 </div>
                 <div className="flex items-start gap-2">
-                  <div className="max-w-[65%] rounded-[4px_14px_14px_14px] border border-[rgba(15,34,51,.08)] bg-white px-[14px] py-3 shadow-[0_2px_8px_rgba(6,15,23,.06)]">
+                  <div className="max-w-[65%] rounded-[4px_14px_14px_14px] border border-[rgba(15,34,51,.08)] bg-porcelain-grain px-[14px] py-3 shadow-[0_2px_8px_rgba(6,15,23,.06)]">
                     {m.isThinking ? (
                       <div className="flex items-center gap-[5px] py-0.5">
                         {[0, 0.18, 0.36].map((d, i) => (
@@ -346,7 +310,7 @@ export default function Chat() {
             <button
               key={c.label}
               onClick={() => send(c.text)}
-              className="rounded-full border border-[rgba(15,34,51,.14)] bg-white px-3 py-[7px] text-[12px] text-navy2 transition-all duration-200 ease-out hover:-translate-y-px hover:border-gold hover:bg-[rgba(201,168,106,.08)]"
+              className="rounded-full border border-[rgba(15,34,51,.14)] bg-porcelain-grain px-3 py-[7px] text-[12px] text-navy2 transition-all duration-200 ease-out hover:-translate-y-px hover:border-gold hover:bg-[rgba(201,168,106,.15)]"
             >
               {c.label}
             </button>
@@ -362,7 +326,7 @@ export default function Chat() {
             className={`flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center rounded-[11px] transition-all duration-200 ease-out ${
               isListening
                 ? "bg-[#ef4444] text-white"
-                : "bg-[#f1eee6] text-[#667085] hover:-translate-y-px hover:bg-gold/20"
+                : "bg-porcelain-grain text-[#667085] hover:-translate-y-px hover:bg-gold/20"
             }`}
             title={isListening ? "Parar gravação" : "Gravar áudio"}
           >
@@ -382,7 +346,7 @@ export default function Chat() {
             disabled={sending}
             rows={1}
             placeholder="Escreva sua dúvida jurídica..."
-            className="max-h-24 min-h-[48px] flex-1 resize-none rounded-[11px] border border-[rgba(15,34,51,.12)] bg-[#f1eee6] px-[14px] py-[13px] text-[14px] leading-[1.4] text-ink outline-none transition-colors duration-200 ease-out focus:border-gold"
+            className="max-h-24 min-h-[48px] flex-1 resize-none rounded-[11px] border border-[rgba(15,34,51,.12)] bg-porcelain-grain px-[14px] py-[13px] text-[14px] leading-[1.4] text-ink outline-none transition-colors duration-200 ease-out focus:border-gold"
           />
           <button
             onClick={() => send()}
