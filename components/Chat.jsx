@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { buildFallbackMeta } from "@/lib/lead-heuristics";
+import { isValidBRPhone, isValidEmail, isValidName, formatBRPhone } from "@/lib/validation";
 
 const CHIPS = [
   { label: "Veículo apreendido", text: "Tive meu veículo apreendido por atraso no financiamento" },
@@ -18,18 +20,50 @@ const GREETING = {
   sources: [],
 };
 
+// Etapas do indicador de progresso (item 6).
+const STEPS = [
+  { key: "entendendo", label: "Entendendo seu caso" },
+  { key: "diagnostico", label: "Diagnóstico" },
+  { key: "advogado", label: "Falar com advogado" },
+];
+const STEP_INDEX = { entendendo: 0, diagnostico: 1, advogado: 2 };
+
+// Horários oferecidos no agendamento (item 4). Offsets calculados no clique.
+const SLOTS = [
+  { id: "hoje-14", label: "Hoje, 14h", dayOffset: 0, hour: 14 },
+  { id: "hoje-16", label: "Hoje, 16h", dayOffset: 0, hour: 16 },
+  { id: "amanha-10", label: "Amanhã, 10h", dayOffset: 1, hour: 10 },
+];
+
 export default function Chat() {
   const [messages, setMessages] = useState([GREETING]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+
+  // ---- recepcionista digital ----
+  const [meta, setMeta] = useState({ stage: "entendendo", tipoCaso: "", urgencia: "baixa", readyForForm: false, diagnosticoParcial: "" });
+  const [phase, setPhase] = useState("chatting"); // chatting | form | scheduling | done
+  const [consent, setConsent] = useState(false);
+  const [lead, setLead] = useState({ nome: "", telefone: "", email: "" });
+  const [formErrors, setFormErrors] = useState({});
+  const [formBusy, setFormBusy] = useState(false);
+  const [scheduleBusy, setScheduleBusy] = useState(false);
+  const [bannerError, setBannerError] = useState("");
+
   const listRef = useRef(null);
   const timers = useRef([]);
   const recognitionRef = useRef(null);
+  const voiceUsedRef = useRef(false); // o caso foi descrito por voz?
+  const dealIdRef = useRef(null); // espelho síncrono p/ updates
+  const sessionId = useRef(`session-web-${Math.round(performance.now())}-${messages.length}`);
 
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
+  // ----------------------------------------------------------------
+  // Reconhecimento de voz (INALTERADO em comportamento)
+  // ----------------------------------------------------------------
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -53,6 +87,7 @@ export default function Chat() {
     recognition.onresult = (e) => {
       for (let i = e.resultIndex; i < e.results.length; i++) {
         if (e.results[i].isFinal) {
+          voiceUsedRef.current = true; // marca que houve descrição por voz
           setInput((prev) => prev + e.results[i][0].transcript + " ");
         }
       }
@@ -68,7 +103,7 @@ export default function Chat() {
   useEffect(() => {
     const el = listRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [messages]);
+  }, [messages, phase]);
 
   // perguntas enviadas pelos botões do carrossel "Perguntar à DAP.IA"
   useEffect(() => {
@@ -77,6 +112,9 @@ export default function Chat() {
     return () => window.removeEventListener("dap:ask", handler);
   });
 
+  // ----------------------------------------------------------------
+  // Texto digitado letra a letra (INALTERADO)
+  // ----------------------------------------------------------------
   const typeOut = useCallback((id, full, sources) => {
     let shown = "";
     const speed = 2;
@@ -99,6 +137,9 @@ export default function Chat() {
     tick();
   }, []);
 
+  // ----------------------------------------------------------------
+  // Áudio TTS (INALTERADO)
+  // ----------------------------------------------------------------
   const useFallbackSynthesis = useCallback((text) => {
     if (!("speechSynthesis" in window)) {
       setIsSpeaking(false);
@@ -164,14 +205,55 @@ export default function Chat() {
     }
   }, [isListening]);
 
+  // ----------------------------------------------------------------
+  // Helpers de histórico p/ Bitrix e RAG
+  // ----------------------------------------------------------------
+  const buildHistory = useCallback(
+    (extra = []) => {
+      const fromMessages = messages
+        .filter((m) => (m.role === "user" || m.role === "bot") && (m.shownText || "").trim() && !m.isThinking)
+        .map((m) => ({ role: m.role === "user" ? "user" : "bot", content: m.shownText, voice: m.voice }));
+      return [...fromMessages, ...extra];
+    },
+    [messages]
+  );
+
+  // Atualização incremental do card (item 3 — anti-abandono).
+  const progressiveUpdate = useCallback(
+    (latestMeta, historico) => {
+      const id = dealIdRef.current;
+      if (!id) return; // só atualiza se o deal já existe (criado no submit do form)
+      fetch("/api/bitrix", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "update",
+          dealId: id,
+          nome: lead.nome,
+          tipoCaso: latestMeta.tipoCaso,
+          urgencia: latestMeta.urgencia,
+          origemVoz: voiceUsedRef.current,
+          etapaConversa: STEPS[STEP_INDEX[latestMeta.stage] ?? 0]?.label,
+          historico,
+        }),
+      }).catch((e) => console.error("update progressivo falhou:", e));
+    },
+    [lead.nome]
+  );
+
+  // ----------------------------------------------------------------
+  // Envio de mensagem
+  // ----------------------------------------------------------------
   const send = useCallback(
     (raw) => {
       const text = (raw ?? input).trim();
       if (!text || sending) return;
-      const base = Date.now();
-      setMessages((ms) => [...ms, { id: base, role: "user", shownText: text, done: true }]);
+      const usedVoice = voiceUsedRef.current;
+      const base = Math.round(performance.now());
+      setMessages((ms) => [...ms, { id: base, role: "user", shownText: text, done: true, voice: usedVoice }]);
       setInput("");
       setSending(true);
+      setBannerError("");
 
       const thinkId = base + 1;
       timers.current.push(
@@ -182,25 +264,175 @@ export default function Chat() {
           ]);
           let reply = "";
           let sources = [];
+          let serverMeta = {};
+          // histórico inclui a mensagem que acabou de ser enviada
+          const historico = buildHistory([{ role: "user", content: text, voice: usedVoice }]);
           try {
             const res = await fetch("/api/chat", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ message: text }),
+              body: JSON.stringify({ message: text, history: historico, sessionId: sessionId.current }),
             });
             const data = await res.json();
             reply = data.reply || "";
             sources = data.sources || [];
+            serverMeta = data.meta || {};
           } catch {
             reply = "Desculpe, não consegui responder agora. Tente novamente em instantes.";
           }
+
+          // recomputa meta (servidor tem prioridade; heurística preenche o resto)
+          const hasContact = Boolean(dealIdRef.current);
+          const nextMeta = buildFallbackMeta(historico, serverMeta, { hasContact });
+          setMeta(nextMeta);
+
+          // captura progressiva do card já existente
+          progressiveUpdate(nextMeta, historico);
+
+          // se o backend extraiu contato, pré-preenche o formulário
+          if (serverMeta.extracted) {
+            setLead((l) => ({
+              nome: l.nome || serverMeta.extracted.nome || "",
+              telefone: l.telefone || serverMeta.extracted.telefone || "",
+              email: l.email || serverMeta.extracted.email || "",
+            }));
+          }
+
+          // abre o formulário de captura quando indicado e ainda não capturado
+          if (nextMeta.readyForForm && !hasContact && phase === "chatting") {
+            timers.current.push(setTimeout(() => setPhase("form"), 600));
+          }
+
           setMessages((ms) => ms.map((m) => (m.id === thinkId ? { ...m, isThinking: false, typing: true } : m)));
           typeOut(thinkId, reply, sources);
         }, 900)
       );
     },
-    [input, sending, typeOut]
+    [input, sending, typeOut, buildHistory, progressiveUpdate, phase]
   );
+
+  // ----------------------------------------------------------------
+  // Formulário de captura (itens 1, 7, 13)
+  // ----------------------------------------------------------------
+  const validateForm = useCallback(() => {
+    const errs = {};
+    if (!isValidName(lead.nome)) errs.nome = "Informe seu nome.";
+    if (!isValidBRPhone(lead.telefone)) errs.telefone = "WhatsApp inválido. Ex: (21) 99999-8888";
+    if (lead.email && !isValidEmail(lead.email)) errs.email = "E-mail inválido.";
+    if (!consent) errs.consent = "Marque o aceite para continuar.";
+    setFormErrors(errs);
+    return Object.keys(errs).length === 0;
+  }, [lead, consent]);
+
+  const submitLead = useCallback(async () => {
+    if (formBusy) return;
+    if (!validateForm()) return;
+    setFormBusy(true);
+    setBannerError("");
+
+    const historico = buildHistory();
+    try {
+      const res = await fetch("/api/bitrix", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "create",
+          nome: lead.nome,
+          telefone: lead.telefone,
+          email: lead.email,
+          tipoCaso: meta.tipoCaso,
+          urgencia: meta.urgencia,
+          origemVoz: voiceUsedRef.current,
+          historico,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || "Falha ao registrar.");
+
+      if (data.dealId) {
+        dealIdRef.current = data.dealId;
+      }
+      setMeta((m) => ({ ...m, stage: "advogado" }));
+      setPhase("scheduling");
+
+      // confirma no chat
+      const okId = Math.round(performance.now()) + 7;
+      setMessages((ms) => [
+        ...ms,
+        {
+          id: okId,
+          role: "bot",
+          done: true,
+          showSources: false,
+          sources: [],
+          shownText: `Perfeito, ${lead.nome.split(" ")[0]}. Já registrei seu contato com segurança. Para adiantar, escolha um horário para um de nossos advogados falar com você:`,
+        },
+      ]);
+    } catch (e) {
+      setBannerError(e.message || "Não foi possível registrar agora. Tente novamente.");
+    } finally {
+      setFormBusy(false);
+    }
+  }, [formBusy, validateForm, buildHistory, lead, meta]);
+
+  // ----------------------------------------------------------------
+  // Agendamento (item 4)
+  // ----------------------------------------------------------------
+  const pickSlot = useCallback(
+    async (slot) => {
+      if (scheduleBusy) return;
+      setScheduleBusy(true);
+      setBannerError("");
+
+      // calcula início/fim em ISO a partir do offset (sem libs)
+      const start = new Date();
+      start.setDate(start.getDate() + slot.dayOffset);
+      start.setHours(slot.hour, 0, 0, 0);
+      const end = new Date(start.getTime() + 30 * 60 * 1000);
+
+      try {
+        const res = await fetch("/api/bitrix", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "schedule",
+            dealId: dealIdRef.current,
+            nome: lead.nome,
+            tipoCaso: meta.tipoCaso,
+            urgencia: meta.urgencia,
+            origemVoz: voiceUsedRef.current,
+            startIso: start.toISOString(),
+            endIso: end.toISOString(),
+            label: slot.label,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) throw new Error(data.error || "Falha ao agendar.");
+
+        setPhase("done");
+        const okId = Math.round(performance.now()) + 9;
+        setMessages((ms) => [
+          ...ms,
+          {
+            id: okId,
+            role: "bot",
+            done: true,
+            showSources: false,
+            sources: [],
+            shownText: `Combinado! Um advogado falará com você ${slot.label.toLowerCase()}. Você receberá a confirmação no WhatsApp informado. Se precisar, pode continuar tirando dúvidas por aqui.`,
+          },
+        ]);
+      } catch (e) {
+        setBannerError(e.message || "Não foi possível agendar agora. Tente novamente.");
+      } finally {
+        setScheduleBusy(false);
+      }
+    },
+    [scheduleBusy, lead.nome, meta]
+  );
+
+  const currentStep = STEP_INDEX[meta.stage] ?? 0;
+  const composerDisabled = sending;
 
   return (
     <div id="chat" className="relative w-full max-w-2xl">
@@ -217,8 +449,41 @@ export default function Chat() {
             <div className="text-[11.5px] text-white/55">Online · responde em segundos</div>
           </div>
           <span className="rounded-md border border-[rgba(201,168,106,.35)] px-2 py-1 font-mono text-[9.5px] tracking-[1.2px] text-gold">
-            Desenvolvido por Caio Marques e Equipe de TI
+            Supervisionado por advogados · OAB/RJ
           </span>
+        </div>
+
+        {/* indicador de progresso (item 6) */}
+        <div className="flex items-center gap-2 border-b border-[rgba(201,168,106,.15)] bg-navy px-[18px] py-[10px]">
+          {STEPS.map((s, i) => {
+            const reached = i <= currentStep;
+            const active = i === currentStep;
+            return (
+              <div key={s.key} className="flex flex-1 items-center gap-2">
+                <div className="flex items-center gap-[7px]">
+                  <span
+                    className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border text-[9px] font-bold transition-all duration-200 ease-out ${
+                      reached
+                        ? "border-gold bg-gold text-navy"
+                        : "border-white/25 bg-transparent text-white/40"
+                    }`}
+                  >
+                    {i + 1}
+                  </span>
+                  <span
+                    className={`whitespace-nowrap text-[10px] tracking-[.3px] transition-colors duration-200 ease-out ${
+                      active ? "font-semibold text-gold" : reached ? "text-white/70" : "text-white/40"
+                    }`}
+                  >
+                    {s.label}
+                  </span>
+                </div>
+                {i < STEPS.length - 1 && (
+                  <span className={`h-px flex-1 transition-colors duration-200 ease-out ${i < currentStep ? "bg-gold/60" : "bg-white/15"}`} />
+                )}
+              </div>
+            );
+          })}
         </div>
 
         <div className="bg-porcelain-grain">
@@ -297,10 +562,57 @@ export default function Chat() {
             ) : (
               <div key={m.id} className="flex justify-end animate-msg-in">
                 <div className="max-w-[78%] rounded-[14px_4px_14px_14px] bg-navy2 px-[14px] py-[11px] text-[14px] leading-[1.55] text-white shadow-[0_3px_10px_rgba(6,15,23,.28)]">
+                  {m.voice && (
+                    <span className="mb-1 flex items-center gap-1 font-mono text-[9.5px] uppercase tracking-[1px] text-gold/80">
+                      <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" /></svg>
+                      por voz
+                    </span>
+                  )}
                   {m.shownText}
                 </div>
               </div>
             )
+          )}
+
+          {/* formulário de captura inline (itens 1, 7, 13) */}
+          {phase === "form" && (
+            <LeadForm
+              lead={lead}
+              setLead={setLead}
+              errors={formErrors}
+              consent={consent}
+              setConsent={setConsent}
+              busy={formBusy}
+              onSubmit={submitLead}
+              diagnostico={meta.diagnosticoParcial}
+            />
+          )}
+
+          {/* agendamento (item 4) */}
+          {phase === "scheduling" && (
+            <div className="animate-msg-in ml-[39px] rounded-[14px] border border-[rgba(201,168,106,.3)] bg-porcelain-grain p-[14px] shadow-[0_2px_8px_rgba(6,15,23,.06)]">
+              <div className="mb-[10px] font-mono text-[9.5px] uppercase tracking-[1.4px] text-golddk">
+                Escolha um horário
+              </div>
+              <div className="flex flex-wrap gap-[7px]">
+                {SLOTS.map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => pickSlot(s)}
+                    disabled={scheduleBusy}
+                    className="rounded-full border border-[rgba(15,34,51,.16)] bg-card px-[14px] py-[8px] text-[12.5px] font-medium text-navy2 transition-all duration-200 ease-out hover:-translate-y-px hover:border-gold hover:bg-[rgba(201,168,106,.15)] disabled:opacity-50"
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {bannerError && (
+            <div className="ml-[39px] rounded-[10px] border border-[rgba(239,68,68,.4)] bg-[rgba(239,68,68,.08)] px-[13px] py-[9px] text-[12.5px] text-[#b42318]">
+              {bannerError}
+            </div>
           )}
         </div>
 
@@ -321,7 +633,7 @@ export default function Chat() {
         <div className="flex items-end gap-[9px] px-4 pb-4">
           <button
             onClick={toggleListening}
-            disabled={sending}
+            disabled={composerDisabled}
             aria-label={isListening ? "Parar gravação" : "Gravar áudio"}
             className={`flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center rounded-[11px] transition-all duration-200 ease-out ${
               isListening
@@ -343,14 +655,14 @@ export default function Chat() {
                 send();
               }
             }}
-            disabled={sending}
+            disabled={composerDisabled}
             rows={1}
             placeholder="Escreva sua dúvida jurídica..."
             className="max-h-24 min-h-[48px] flex-1 resize-none rounded-[11px] border border-[rgba(15,34,51,.12)] bg-porcelain-grain px-[14px] py-[13px] text-[14px] leading-[1.4] text-ink outline-none transition-colors duration-200 ease-out focus:border-gold"
           />
           <button
             onClick={() => send()}
-            disabled={sending}
+            disabled={composerDisabled}
             aria-label="Enviar"
             className="flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center rounded-[11px] bg-navy text-[20px] text-gold transition-all duration-200 ease-out hover:-translate-y-px hover:bg-navy2"
           >
@@ -360,5 +672,116 @@ export default function Chat() {
         </div>
       </div>
     </div>
+  );
+}
+
+// ====================================================================
+// Formulário de captura de lead (inline no chat)
+// Itens 1 (captura + validação), 7 (LGPD), 13 (microcopy de segurança)
+// ====================================================================
+function LeadForm({ lead, setLead, errors, consent, setConsent, busy, onSubmit, diagnostico }) {
+  const set = (k) => (e) => setLead((l) => ({ ...l, [k]: e.target.value }));
+
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSubmit();
+      }}
+      className="animate-msg-in ml-[39px] rounded-[14px] border border-[rgba(201,168,106,.3)] bg-porcelain-grain p-[16px] shadow-[0_2px_8px_rgba(6,15,23,.06)]"
+      aria-label="Formulário de contato"
+    >
+      <div className="mb-[10px] font-mono text-[9.5px] uppercase tracking-[1.4px] text-golddk">
+        Para um advogado dar sequência
+      </div>
+
+      {diagnostico && (
+        <p className="mb-[12px] rounded-[9px] border-l-2 border-gold bg-[rgba(201,168,106,.1)] px-[11px] py-[8px] text-[12.5px] leading-[1.55] text-[#22323f]">
+          {diagnostico}
+        </p>
+      )}
+
+      <div className="flex flex-col gap-[9px]">
+        <div>
+          <label htmlFor="lead-nome" className="sr-only">Nome</label>
+          <input
+            id="lead-nome"
+            type="text"
+            value={lead.nome}
+            onChange={set("nome")}
+            placeholder="Seu nome"
+            autoComplete="name"
+            aria-invalid={Boolean(errors.nome)}
+            className="w-full rounded-[9px] border border-[rgba(15,34,51,.14)] bg-card px-[12px] py-[10px] text-[13.5px] text-ink outline-none transition-colors duration-200 ease-out focus:border-gold"
+          />
+          {errors.nome && <p className="mt-1 text-[11px] text-[#b42318]">{errors.nome}</p>}
+        </div>
+
+        <div>
+          <label htmlFor="lead-tel" className="sr-only">WhatsApp</label>
+          <input
+            id="lead-tel"
+            type="tel"
+            inputMode="tel"
+            value={lead.telefone}
+            onChange={set("telefone")}
+            onBlur={() => setLead((l) => ({ ...l, telefone: formatBRPhone(l.telefone) }))}
+            placeholder="WhatsApp — (21) 99999-8888"
+            autoComplete="tel"
+            aria-invalid={Boolean(errors.telefone)}
+            className="w-full rounded-[9px] border border-[rgba(15,34,51,.14)] bg-card px-[12px] py-[10px] text-[13.5px] text-ink outline-none transition-colors duration-200 ease-out focus:border-gold"
+          />
+          {errors.telefone && <p className="mt-1 text-[11px] text-[#b42318]">{errors.telefone}</p>}
+        </div>
+
+        <div>
+          <label htmlFor="lead-email" className="sr-only">E-mail (opcional)</label>
+          <input
+            id="lead-email"
+            type="email"
+            inputMode="email"
+            value={lead.email}
+            onChange={set("email")}
+            placeholder="E-mail (opcional)"
+            autoComplete="email"
+            aria-invalid={Boolean(errors.email)}
+            className="w-full rounded-[9px] border border-[rgba(15,34,51,.14)] bg-card px-[12px] py-[10px] text-[13.5px] text-ink outline-none transition-colors duration-200 ease-out focus:border-gold"
+          />
+          {errors.email && <p className="mt-1 text-[11px] text-[#b42318]">{errors.email}</p>}
+        </div>
+      </div>
+
+      {/* consentimento LGPD (item 7) */}
+      <label className="mt-[12px] flex cursor-pointer items-start gap-[8px]">
+        <input
+          type="checkbox"
+          checked={consent}
+          onChange={(e) => setConsent(e.target.checked)}
+          aria-invalid={Boolean(errors.consent)}
+          className="mt-[2px] h-[15px] w-[15px] shrink-0 cursor-pointer accent-[#9c7b3f]"
+        />
+        <span className="text-[11.5px] leading-[1.5] text-[#5c6b76]">
+          Autorizo o contato da DAP Advocacia sobre o meu caso e o uso dos meus dados para esse
+          atendimento, conforme a LGPD.
+        </span>
+      </label>
+      {errors.consent && <p className="mt-1 text-[11px] text-[#b42318]">{errors.consent}</p>}
+
+      {/* microcopy de segurança (item 13) */}
+      <p className="mt-[10px] flex items-center gap-[6px] text-[11px] text-[#7a8893]">
+        <svg className="h-[13px] w-[13px] shrink-0 text-golddk" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z" />
+        </svg>
+        Usamos seu contato apenas para um advogado falar com você. Sem spam.
+      </p>
+
+      <button
+        type="submit"
+        disabled={busy}
+        className="mt-[14px] w-full cursor-pointer rounded-[10px] bg-navy px-[18px] py-[12px] text-[14px] font-semibold text-gold transition-all duration-200 ease-out hover:-translate-y-px hover:bg-navy2 disabled:cursor-default disabled:opacity-60"
+      >
+        {busy ? "Enviando…" : "Falar com um advogado"}
+      </button>
+    </form>
   );
 }

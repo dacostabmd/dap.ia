@@ -1,0 +1,154 @@
+{
+  "projeto": "dap-ia-landing",
+  "data": "2026-06-30",
+  "titulo": "DAP.IA — Recepcionista digital com captura de lead e integração Bitrix",
+  "resumo": "Transformação do chat informativo em recepcionista digital que qualifica o caso, captura lead com consentimento LGPD, cria/atualiza card no Bitrix CRM, agenda atendimento e dispara evento no feed. Áudio (STT/TTS) e padrão visual (navy/gold, Spectral/IBM Plex, porcelain-grain, duration-200 ease-out) preservados.",
+  "decisoes_chave": {
+    "orquestracao": "Delegada ao RAG — o front envia histórico e espera envelope `meta`. Prompt do backend documentado em docs/backend-rag-prompt.md.",
+    "fallback_meta": "Heurística local leve (lib/lead-heuristics.js) enquanto o backend não devolve `meta`. Servidor tem prioridade campo a campo.",
+    "bitrix": "Modo mock quando BITRIX_WEBHOOK_URL ausente (loga payload, devolve dealId simulado). Chamada real quando configurada.",
+    "campos_crm": "Centralizados em lib/bitrix-config.js, todos sobrescrevíveis por env var. Campos UF_CRM_* placeholder NÃO são enviados ao Bitrix (evita erro 'field not found').",
+    "testes": "Vitest adicionado (devDependency). 47 testes cobrindo validação, config Bitrix, rota /api/bitrix (fetch mockado) e heurísticas."
+  },
+  "itens_implementados": [
+    {
+      "id": 1,
+      "titulo": "Captura de lead com diagnóstico parcial",
+      "status": "implementado",
+      "arquivos": ["components/Chat.jsx", "lib/validation.js", "lib/lead-heuristics.js"],
+      "detalhes": "Após 2-3 trocas (meta.readyForForm ou heurística), o chat abre formulário inline (nome + WhatsApp + e-mail opcional) com estado React puro, sem libs novas. Validação de telefone BR (celular 11 díg/9 na 3ª posição, fixo 10 díg, DDI 55, DDD válido) e e-mail. Diagnóstico parcial exibido acima do formulário."
+    },
+    {
+      "id": 2,
+      "titulo": "Integração com Bitrix (crm.deal.add)",
+      "status": "implementado",
+      "arquivos": ["app/api/bitrix/route.js", "lib/bitrix.js", "lib/bitrix-config.js"],
+      "detalhes": "Rota POST /api/bitrix (action=create) recebe {nome, telefone, email, tipoCaso, urgencia, historico, origemVoz}, chama crm.deal.add com campos mapeados + crm.timeline.comment.add com o histórico. BITRIX_WEBHOOK_URL só no servidor, nunca no client. try/catch + timeout (AbortController 10s) + logs. Prompt treina o agente a reconhecer/extrair dados (meta.extracted) e autopreencher o deal."
+    },
+    {
+      "id": 3,
+      "titulo": "Captura progressiva (anti-abandono)",
+      "status": "implementado",
+      "arquivos": ["components/Chat.jsx", "app/api/bitrix/route.js"],
+      "detalhes": "dealId guardado em ref. Após a criação do card, cada mensagem relevante dispara action=update (crm.deal.update) com tipoCaso/urgencia refinados, etapa da conversa e histórico atualizado — sem criar card duplicado. Criação só após consentimento (LGPD) para não gerar cards sem contato/sem aceite."
+    },
+    {
+      "id": 4,
+      "titulo": "Agendamento no chat",
+      "status": "implementado",
+      "arquivos": ["components/Chat.jsx", "app/api/bitrix/route.js", "lib/bitrix.js"],
+      "detalhes": "Após captura, chips de horário (hoje 14h/16h, amanhã 10h) no padrão visual atual. Ao clicar: action=schedule cria crm.activity.add (reunião, ISO start/end) vinculada ao deal e dispara log.blogpost.add no feed ('A DAP.IA captou um lead') estruturando nome/tipo/urgência/voz."
+    },
+    {
+      "id": 5,
+      "titulo": "Transcrição de áudio no card",
+      "status": "implementado",
+      "arquivos": ["components/Chat.jsx", "app/api/bitrix/route.js"],
+      "detalhes": "Mensagens enviadas via microfone são marcadas (voiceUsedRef). O card recebe origemVoz=true e o comentário de timeline inclui cabeçalho indicando descrição por VOZ + transcrição completa. Sem limite artificial de caracteres no histórico/transcrição."
+    },
+    {
+      "id": 6,
+      "titulo": "Indicador de progresso no chat",
+      "status": "implementado",
+      "arquivos": ["components/Chat.jsx"],
+      "detalhes": "Stepper sutil no topo do chat (sobre fundo navy): 'Entendendo seu caso → Diagnóstico → Falar com advogado'. Avança conforme meta.stage (entendendo/diagnostico/advogado)."
+    },
+    {
+      "id": 7,
+      "titulo": "Banner de consentimento LGPD",
+      "status": "implementado",
+      "arquivos": ["components/Chat.jsx"],
+      "detalhes": "Checkbox obrigatório no formulário, texto curto sem juridiquês. Envio bloqueado sem o aceite (validação retorna erro e impede o POST)."
+    },
+    {
+      "id": 8,
+      "titulo": "Prova social no Hero",
+      "status": "implementado",
+      "arquivos": ["components/Hero.jsx"],
+      "detalhes": "Linha de credibilidade '17+ anos · 12 estados · parte do Grupo Durão' posicionada logo abaixo do CTA principal."
+    },
+    {
+      "id": 9,
+      "titulo": "CTA fixo no mobile",
+      "status": "implementado",
+      "arquivos": ["components/MobileCTA.jsx", "app/page.js"],
+      "detalhes": "Barra fixa no rodapé só em <768px (md:hidden): botão 'Analisar meu caso' (rola até o chat) + atalho WhatsApp. Padding inferior no <main> p/ não cobrir o footer. Escondida no desktop."
+    },
+    {
+      "id": 10,
+      "titulo": "Nova headline (Hero)",
+      "status": "implementado",
+      "arquivos": ["components/Hero.jsx"],
+      "detalhes": "h1 trocada para 'Descubra em segundos se você tem direito a reaver seu bem ou revisar sua dívida.' com destaque italic gold na palavra 'reaver'."
+    },
+    {
+      "id": 11,
+      "titulo": "Ajuste do badge do chat",
+      "status": "implementado",
+      "arquivos": ["components/Chat.jsx", "components/Footer.jsx"],
+      "detalhes": "Badge do header do chat trocado para 'Supervisionado por advogados · OAB/RJ'. Crédito de desenvolvimento ('Caio Marques e Equipe de TI') consolidado no Footer."
+    },
+    {
+      "id": 12,
+      "titulo": "CTA orientado a ação",
+      "status": "implementado",
+      "arquivos": ["components/Hero.jsx", "components/CTA.jsx", "app/page.js"],
+      "detalhes": "Hero: 'Conversar agora' → 'Analisar meu caso grátis'. CTA final: copy de benefício consultivo ('Entenda seu caso em segundos' / 'Analisar meu caso grátis'). Observação: <CTA /> não estava renderizado em page.js (import órfão) — agora montado para que o ajuste apareça."
+    },
+    {
+      "id": 13,
+      "titulo": "Microcopy de segurança",
+      "status": "implementado",
+      "arquivos": ["components/Chat.jsx"],
+      "detalhes": "Linha discreta junto ao formulário: 'Usamos seu contato apenas para um advogado falar com você. Sem spam.' com ícone de escudo."
+    }
+  ],
+  "novos_arquivos": [
+    "app/api/bitrix/route.js",
+    "lib/bitrix.js",
+    "lib/bitrix-config.js",
+    "lib/validation.js",
+    "lib/lead-heuristics.js",
+    "components/MobileCTA.jsx",
+    "vitest.config.mjs",
+    "docs/backend-rag-prompt.md",
+    "__tests__/validation.test.js",
+    "__tests__/bitrix-config.test.js",
+    "__tests__/bitrix-route.test.js",
+    "__tests__/lead-heuristics.test.js",
+    "att-30-06.json"
+  ],
+  "arquivos_alterados": [
+    "components/Chat.jsx",
+    "components/Hero.jsx",
+    "components/CTA.jsx",
+    "components/Footer.jsx",
+    "app/page.js",
+    "app/api/chat/route.js",
+    "package.json",
+    ".env.example"
+  ],
+  "variaveis_ambiente_novas": {
+    "BITRIX_WEBHOOK_URL": "Webhook REST de entrada do Bitrix (vazio = modo mock). NUNCA no client.",
+    "BITRIX_CATEGORY_ID": "ID do funil (0 = padrão).",
+    "BITRIX_STAGE_ID": "ID do estágio inicial (ex: C1:NEW).",
+    "BITRIX_SOURCE_ID": "Origem do negócio (default WEB).",
+    "BITRIX_ASSIGNED_BY_ID": "Responsável padrão (vazio = automático).",
+    "BITRIX_UF_WHATSAPP": "Código UF_CRM_* do campo WhatsApp.",
+    "BITRIX_UF_TIPO_CASO": "Código UF_CRM_* do tipo de caso.",
+    "BITRIX_UF_URGENCIA": "Código UF_CRM_* da urgência.",
+    "BITRIX_UF_ORIGEM_VOZ": "Código UF_CRM_* da flag de voz.",
+    "BITRIX_UF_ETAPA": "Código UF_CRM_* da etapa da conversa."
+  },
+  "verificacao": {
+    "testes": "npm test — 47 passando (4 arquivos).",
+    "build": "npm run build — compilado com sucesso; rotas /api/bitrix, /api/chat, /api/tts registradas.",
+    "audio_preservado": true,
+    "novas_dependencias_runtime": "nenhuma (apenas vitest em devDependencies)"
+  },
+  "pendencias": [
+    "Subir o prompt de docs/backend-rag-prompt.md no repositório do backend RAG para o `meta` real começar a chegar.",
+    "Substituir os placeholders UF_CRM_* e IDs de funil/estágio pelos valores reais do portal Bitrix (via env vars).",
+    "Configurar BITRIX_WEBHOOK_URL no ambiente para sair do modo mock."
+  ]
+}

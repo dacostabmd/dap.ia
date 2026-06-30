@@ -48,12 +48,12 @@ export default function Hero() {
             </span>
           </div>
           <h1 className="m-0 mb-[22px] font-serif text-[52px] font-semibold leading-[1.08] tracking-[-.5px] text-white">
-            Orientação jurídica inteligente, <span className="italic text-gold">fundamentada</span> nos documentos do
-            escritório.
+            Descubra em segundos se você tem direito a <span className="italic text-gold">reaver</span> seu bem ou
+            revisar sua dívida.
           </h1>
           <p className="m-0 mb-[34px] max-w-[520px] text-[18px] leading-[1.6] text-white/[.74]">
-            A <strong className="font-semibold text-white">DAP.IA</strong> responde suas dúvidas com base na legislação e
-            na nossa biblioteca jurídica — respostas claras, em segundos, sempre com as{" "}
+            A <strong className="font-semibold text-white">DAP.IA</strong> entende seu caso e explica seus direitos com
+            base na legislação e na nossa biblioteca jurídica — respostas claras, em segundos, sempre com as{" "}
             <strong className="font-semibold text-white">fontes citadas</strong>.
           </p>
           <div className="flex flex-wrap items-center gap-[14px]">
@@ -61,7 +61,7 @@ export default function Hero() {
               href="#chat"
               className="cursor-pointer rounded-[9px] bg-gold px-7 py-[15px] text-[15px] font-semibold tracking-[.2px] text-navy shadow-[0_10px_30px_rgba(201,168,106,.22)] transition-all duration-300 ease-in-out hover:-translate-y-[3px] hover:scale-[1.03] hover:bg-gold2 hover:shadow-[0_18px_40px_rgba(201,168,106,.36)]"
             >
-              Conversar agora
+              Analisar meu caso grátis
             </a>
             <a
               href="#direitos"
@@ -70,7 +70,25 @@ export default function Hero() {
               Conheça seus direitos
             </a>
           </div>
-          <div className="mt-[38px] flex flex-wrap gap-[26px]">
+
+          {/* prova social do Grupo Durão (item 8) — perto do CTA principal */}
+          <div className="mt-[22px] flex flex-wrap items-center gap-x-[14px] gap-y-2 text-[13px] text-white/70">
+            <span className="inline-flex items-center gap-[7px]">
+              <span className="text-gold">✦</span>
+              <strong className="font-semibold text-white">17+ anos</strong> de atuação
+            </span>
+            <span className="h-[12px] w-px bg-white/20" aria-hidden="true" />
+            <span className="inline-flex items-center gap-[7px]">
+              <span className="text-gold">✦</span>
+              <strong className="font-semibold text-white">12 estados</strong> no país
+            </span>
+            <span className="h-[12px] w-px bg-white/20" aria-hidden="true" />
+            <span className="inline-flex items-center gap-[7px]">
+              <span className="text-gold">✦</span>
+              parte do <strong className="font-semibold text-white">Grupo Durão</strong>
+            </span>
+          </div>
+          <div className="mt-[26px] flex flex-wrap gap-[26px] border-t border-white/10 pt-[24px]">
             {["Respostas com fonte", "Conversa criptografada", "Encaminhamento a um advogado"].map((f) => (
               <div key={f} className="flex items-center gap-[9px]">
                 <span className="text-[15px] text-gold">✦</span>

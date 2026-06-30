@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls \"C:\\\\Users\\\\caio.marques\\\\.claude\\\\projects\\\\c--Projetos-dap-ia-chatbot\\\\\" 2>/dev/null || echo \"dir not found\")",
+      "Read(//c/Users/caio.marques/.claude/projects/c--Projetos-dap-ia-chatbot\" 2>/dev/**)",
+      "Read(//c/Users/caio.marques/.claude/projects/c--Projetos-dap-ia-chatbot/memory/**)",
+      "Bash(git commit -m ' *)",
+      "PowerShell(npm install --no-audit --no-fund 2>&1)",
+      "PowerShell(npm test 2>&1)",
+      "PowerShell(npm run build 2>&1)",
+      "PowerShell(npm run lint 2>&1)",
+      "PowerShell(Get-Process -Name node -ErrorAction SilentlyContinue)"
+    ],
+    "additionalDirectories": [
+      "c:\\Projetos\\dap.ia_chatbot\\lib"
+    ]
+  }
+}

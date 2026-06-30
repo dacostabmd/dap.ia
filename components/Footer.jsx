@@ -22,7 +22,7 @@ export default function Footer() {
       <div className="relative z-10 mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-3 px-7 py-8">
         <span className="text-[12px] text-white/40">© 2026 DAP Advocacia. Todos os direitos reservados.</span>
         <span className="font-mono text-[11px] tracking-[1px] text-[rgba(201,168,106,.5)]">
-          Desenvolvido por Caio Marques
+          Desenvolvido por Caio Marques e Equipe de TI
         </span>
       </div>
     </footer>
