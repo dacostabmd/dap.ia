@@ -1,0 +1,245 @@
+{
+  "projeto": "dap-ia-landing",
+  "data": "2026-07-01",
+  "titulo": "Revisão de código para produção — pendências e correções",
+  "resumo": "Consolidação das pendências levantadas na revisão de preparação para produção (segurança, desempenho, SEO/LGPD e limpeza). Build passa (exit 0) e 60/60 testes verdes; os itens abaixo são hardening e boas práticas, não refatoração de arquitetura. Ordem de ataque sugerida no campo 'sequencia_sugerida'.",
+  "veredito": {
+    "build": "limpo (Next 16.2.9, exit 0)",
+    "testes": "60/60 passando (Vitest)",
+    "home": "estática (prerender)",
+    "total_pendencias": 19,
+    "por_severidade": { "bloqueador": 3, "alta": 5, "media": 4, "baixa": 7 }
+  },
+  "legenda": {
+    "severidade": ["bloqueador", "alta", "media", "baixa"],
+    "status": ["pendente", "em_andamento", "concluido"],
+    "categoria": ["seguranca", "desempenho", "seo", "lgpd", "limpeza"]
+  },
+  "pendencias": [
+    {
+      "id": 1,
+      "categoria": "seguranca",
+      "severidade": "bloqueador",
+      "status": "pendente",
+      "titulo": "/api/tts é vetor de estouro de custo",
+      "arquivos": ["app/api/tts/route.js"],
+      "referencia": "app/api/tts/route.js:4",
+      "problema": "Rota chama Google/Azure (cobram por caractere) sem rate-limit, sem limite de tamanho do campo `text` e sem autenticação. Um loop de requisições com texto grande gera custo ilimitado de nuvem.",
+      "correcao": "Cap de tamanho (ex.: text.length > 800 -> 400), rate-limit por IP reaproveitando lib/rate-limit.js, e cache dos áudios já gerados (respostas do bot se repetem)."
+    },
+    {
+      "id": 2,
+      "categoria": "seguranca",
+      "severidade": "bloqueador",
+      "status": "pendente",
+      "titulo": "/api/bitrix permite floodar o CRM",
+      "arquivos": ["app/api/bitrix/route.js"],
+      "referencia": "app/api/bitrix/route.js:50",
+      "problema": "action=create não tem rate-limit nem auth; cada chamada cria contato + deal + comentário no Bitrix real. Script externo enche o funil de leads falsos. Comentário/histórico sem limite de tamanho (route.js:37).",
+      "correcao": "Rate-limit por IP nesta rota + verificação de origem (ver pendência 4) + limite de tamanho de historico/infoExtra."
+    },
+    {
+      "id": 3,
+      "categoria": "seguranca",
+      "severidade": "bloqueador",
+      "status": "pendente",
+      "titulo": "RATE_LIMIT_SECRET cai em segredo hardcoded",
+      "arquivos": ["lib/rate-limit.js"],
+      "referencia": "lib/rate-limit.js:22",
+      "problema": "Fallback 'dev-insecure-rate-limit-secret' está no código-fonte. Se a env var não for definida em produção, o atacante assina o próprio cookie (count=0) e zera o rate-limit do chat.",
+      "correcao": "Falhar alto em produção: if (NODE_ENV === 'production' && !process.env.RATE_LIMIT_SECRET) throw new Error('RATE_LIMIT_SECRET obrigatório em produção'). Gerar segredo com openssl rand -base64 32 e configurar no host."
+    },
+    {
+      "id": 4,
+      "categoria": "seguranca",
+      "severidade": "alta",
+      "status": "pendente",
+      "titulo": "Sem verificação de origem nas rotas de mutação",
+      "arquivos": ["app/api/bitrix/route.js", "app/api/tts/route.js"],
+      "referencia": "middleware.js (inexistente)",
+      "problema": "Não há middleware nem checagem de Origin/Referer. Qualquer site pode disparar /api/bitrix e /api/tts a partir do navegador de terceiros.",
+      "correcao": "Checagem same-origin (Origin/Referer contra host permitido) ou header-segredo compartilhado que só o front conhece."
+    },
+    {
+      "id": 5,
+      "categoria": "seguranca",
+      "severidade": "alta",
+      "status": "pendente",
+      "titulo": "Sem cabeçalhos de segurança",
+      "arquivos": ["next.config.mjs"],
+      "referencia": "next.config.mjs:2",
+      "problema": "Config só trata imagens. Faltam CSP, X-Frame-Options/frame-ancestors (anti-clickjacking, relevante por coletar PII), Referrer-Policy e HSTS.",
+      "correcao": "Adicionar async headers() no next.config com os headers de segurança, ou centralizar em middleware."
+    },
+    {
+      "id": 6,
+      "categoria": "seguranca",
+      "severidade": "media",
+      "status": "pendente",
+      "titulo": "Rate-limit por IP é spoofável",
+      "arquivos": ["lib/rate-limit.js"],
+      "referencia": "lib/rate-limit.js:25",
+      "problema": "Confia no primeiro valor de x-forwarded-for, controlado pelo cliente se não houver proxy normalizando. Na Vercel é seguro (reescreve o header); fora dela, é burlável junto com limpar cookies.",
+      "correcao": "Documentar a premissa de deploy (proxy confiável reescrevendo XFF). Para proteção real, store server-side (Redis) por IP."
+    },
+    {
+      "id": 7,
+      "categoria": "seguranca",
+      "severidade": "baixa",
+      "status": "pendente",
+      "titulo": "TTS vaza error.message ao cliente",
+      "arquivos": ["app/api/tts/route.js"],
+      "referencia": "app/api/tts/route.js:98",
+      "problema": "Resposta de erro devolve error.message cru, podendo expor detalhe interno.",
+      "correcao": "Trocar por mensagem genérica em pt-BR; logar o detalhe só no servidor."
+    },
+    {
+      "id": 8,
+      "categoria": "desempenho",
+      "severidade": "alta",
+      "status": "pendente",
+      "titulo": "LCP do Hero: logo <img> cru externo, sem dimensões; selos sem priority",
+      "arquivos": ["components/Hero.jsx"],
+      "referencia": "components/Hero.jsx:28",
+      "problema": "Logo é <img> externo (dapadvocacia.com.br) com eslint-disable, sem width/height -> CLS e dependência externa no topo. selos.png usa <Image> mas sem priority. Nenhuma imagem do Hero marca o LCP (contraria CLAUDE.md).",
+      "correcao": "Migrar logo para next/image com width/height explícitos; marcar a imagem LCP com priority. Adicionar o host do logo em next.config remotePatterns se mantido remoto."
+    },
+    {
+      "id": 9,
+      "categoria": "desempenho",
+      "severidade": "media",
+      "status": "pendente",
+      "titulo": "RevealedText renderiza um motion.span por caractere",
+      "arquivos": ["components/Chat.jsx"],
+      "referencia": "components/Chat.jsx:855",
+      "problema": "Cada caractere vira um <motion.span> animado e re-renderiza a cada frame do rAF (~30x/s). Resposta longa (400+ chars) = centenas de componentes animados -> jank em mobile.",
+      "correcao": "Revelar por palavra/bloco em vez de por caractere, ou usar reveal em CSS puro."
+    },
+    {
+      "id": 10,
+      "categoria": "desempenho",
+      "severidade": "baixa",
+      "status": "pendente",
+      "titulo": "useEffect sem array de dependências (listener dap:ask)",
+      "arquivos": ["components/Chat.jsx"],
+      "referencia": "components/Chat.jsx:186",
+      "problema": "Re-registra o listener dap:ask a cada render (inclusive a cada tecla no input).",
+      "correcao": "Usar um ref para o send mais recente e registrar o listener uma única vez com [] de dependências."
+    },
+    {
+      "id": 11,
+      "categoria": "desempenho",
+      "severidade": "baixa",
+      "status": "pendente",
+      "titulo": "9 arquivos de fonte carregados",
+      "arquivos": ["app/layout.js"],
+      "referencia": "app/layout.js:4",
+      "problema": "Spectral(4) + Plex Sans(3) + Plex Mono(2). Bem servidos via next/font (sem CLS), mas é peso extra.",
+      "correcao": "Avaliar reduzir pesos realmente usados para aliviar o carregamento."
+    },
+    {
+      "id": 12,
+      "categoria": "seo",
+      "severidade": "alta",
+      "status": "pendente",
+      "titulo": "Metadata mínima (sem OpenGraph/Twitter)",
+      "arquivos": ["app/layout.js"],
+      "referencia": "app/layout.js:23",
+      "problema": "Só title + description. Faltam metadataBase, openGraph e twitter cards — exigido pelo CLAUDE.md. Link compartilhado no WhatsApp/redes sai sem imagem e sem preview.",
+      "correcao": "Adicionar metadataBase, openGraph (title/description/image/type/locale) e twitter card no export const metadata."
+    },
+    {
+      "id": 13,
+      "categoria": "seo",
+      "severidade": "media",
+      "status": "pendente",
+      "titulo": "Sem robots.js, sitemap.js e icon/favicon",
+      "arquivos": ["app/"],
+      "referencia": "app/ (arquivos ausentes)",
+      "problema": "Faltam app/robots.js, app/sitemap.js e app/icon (favicon). Prejudica indexação e polimento.",
+      "correcao": "Criar app/robots.js, app/sitemap.js e adicionar app/icon.(png|svg)."
+    },
+    {
+      "id": 14,
+      "categoria": "seo",
+      "severidade": "media",
+      "status": "pendente",
+      "titulo": "Sem dados estruturados (JSON-LD)",
+      "arquivos": ["app/layout.js", "components/Chat.jsx"],
+      "referencia": "app/layout.js",
+      "problema": "Sem JSON-LD. Schema LegalService/Attorney + FAQPage (perguntas já existem nos CHIPS do Chat) daria rich results — oportunidade de SEO para escritório de advocacia.",
+      "correcao": "Injetar <script type=application/ld+json> com LegalService e FAQPage."
+    },
+    {
+      "id": 15,
+      "categoria": "lgpd",
+      "severidade": "alta",
+      "status": "pendente",
+      "titulo": "Consentimento LGPD sem Política de Privacidade linkada",
+      "arquivos": ["components/Chat.jsx", "components/Footer.jsx"],
+      "referencia": "components/Chat.jsx:986",
+      "problema": "Checkbox cita 'conforme a LGPD' mas não há Política de Privacidade em lugar nenhum (Footer só tem copyright). Coleta de PII com consentimento explícito exige a política acessível.",
+      "correcao": "Criar página/rota de Política de Privacidade e linká-la no consentimento e no rodapé."
+    },
+    {
+      "id": 16,
+      "categoria": "limpeza",
+      "severidade": "baixa",
+      "status": "pendente",
+      "titulo": "Código morto (import CTA não usado; ComoFunciona não renderizado)",
+      "arquivos": ["app/page.js", "components/CTA.jsx", "components/ComoFunciona.jsx"],
+      "referencia": "app/page.js:5",
+      "problema": "CTA é importado mas não usado em page.js; ComoFunciona.jsx existe e não é renderizado.",
+      "correcao": "Remover import não usado e decidir sobre ComoFunciona (usar ou remover)."
+    },
+    {
+      "id": 17,
+      "categoria": "limpeza",
+      "severidade": "baixa",
+      "status": "pendente",
+      "titulo": "att-30-06.json versionado na raiz",
+      "arquivos": ["att-30-06.json"],
+      "referencia": "att-30-06.json",
+      "problema": "Changelog de dev na raiz do repo. Não é servido ao cliente, mas é ruído.",
+      "correcao": "Mover para docs/."
+    },
+    {
+      "id": 18,
+      "categoria": "desempenho",
+      "severidade": "baixa",
+      "status": "pendente",
+      "titulo": "buildSlots() chamado no render",
+      "arquivos": ["components/Chat.jsx"],
+      "referencia": "components/Chat.jsx:698",
+      "problema": "Recomputa slots (Date/Intl) a cada render durante a fase de agendamento.",
+      "correcao": "Memoizar com useMemo enquanto a fase for 'scheduling'."
+    },
+    {
+      "id": 19,
+      "categoria": "desempenho",
+      "severidade": "baixa",
+      "status": "pendente",
+      "titulo": "alert() para navegador sem reconhecimento de voz",
+      "arquivos": ["components/Chat.jsx"],
+      "referencia": "components/Chat.jsx:277",
+      "problema": "Usa alert() nativo como feedback — UX pobre e bloqueante.",
+      "correcao": "Substituir por banner/toast no padrão visual do chat."
+    }
+  ],
+  "ja_bem_feito": [
+    "Timeouts com AbortController em todas as chamadas externas (chat, bitrix, tts)",
+    "Segredos apenas no servidor (BITRIX_WEBHOOK_URL/RAG_API_KEY nunca no client)",
+    "Cookie de rate-limit assinado com HMAC + comparação timing-safe (lib/rate-limit.js:83)",
+    "Escape de XML no SSML do TTS (anti-injeção)",
+    "Grainient (WebGL) pausa loop via IntersectionObserver + visibilitychange, DPR<=2, antialias off",
+    "Modo mock do Bitrix para dev sem credenciais",
+    "Validação BR de telefone robusta + 60 testes cobrindo lógica crítica",
+    "Home estática (bom para SEO/performance)"
+  ],
+  "sequencia_sugerida": [
+    { "passo": 1, "descricao": "Proteger /api/tts e /api/bitrix + guard do RATE_LIMIT_SECRET", "pendencias": [1, 2, 3] },
+    { "passo": 2, "descricao": "Cabeçalhos de segurança + verificação de origem", "pendencias": [4, 5, 6, 7] },
+    { "passo": 3, "descricao": "Metadata/OG + robots/sitemap + JSON-LD + Política de Privacidade (LGPD)", "pendencias": [12, 13, 14, 15] },
+    { "passo": 4, "descricao": "LCP do Hero e RevealedText + limpezas", "pendencias": [8, 9, 10, 11, 16, 17, 18, 19] }
+  ]
+}
