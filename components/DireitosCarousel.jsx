@@ -48,14 +48,13 @@ export default function DireitosCarousel() {
         {/* header + arrows */}
         <div className="mb-[34px] flex flex-wrap items-end justify-between gap-7">
           <div className="max-w-[640px]">
-            <span className="font-mono text-[11px] uppercase tracking-[2.6px] text-gold">Conheça seus direitos</span>
+            <span className="font-mono text-[11px] uppercase tracking-[2.6px] text-gold">Áreas de atuação</span>
             <h2 className="m-0 mt-[14px] font-serif text-[40px] font-semibold leading-[1.12] tracking-[-.5px]  text-navy">
-              Você pode estar pagando por algo que a lei não permite
+              Do direito bancário ao penal, o fundamento legal do seu caso
             </h2>
             <p className="m-0 mt-[14px] text-[16px] leading-[1.6] text-[#5c6b76]">
-              Da <strong className="font-semibold text-navy">busca e apreensão</strong> do seu veículo aos{" "}
-              <strong className="font-semibold text-navy">juros abusivos</strong> do banco — entenda o que a lei garante
-              e pergunte à DAP.IA.
+              Atuação técnica em <strong className="font-semibold text-navy">oito áreas do Direito</strong> — cada tese
+              ancorada em lei, súmula e jurisprudência. Selecione a matéria e leve seu caso à DAP.IA.
             </p>
           </div>
           <div className="flex w-full justify-center gap-6 sm:w-auto sm:justify-end sm:gap-[10px]">
@@ -107,77 +106,62 @@ export default function DireitosCarousel() {
               return (
                 <div
                   key={s.title}
-                  className="min-w-0 shrink-0 grow-0 basis-full p-[50px_52px]"
+                  className="min-w-0 shrink-0 grow-0 basis-full p-[54px_28px] sm:p-[64px_52px]"
                 >
                   <div
-                    className="grid grid-cols-1 items-center gap-[46px] lg:grid-cols-[1.15fr_.85fr]"
+                    className="mx-auto flex max-w-[720px] flex-col items-center text-center"
                     style={{
                       opacity: active ? 1 : 0.25,
                       transform: active ? "none" : "translateY(20px)",
                       transition: "opacity .55s ease, transform .6s cubic-bezier(.22,.61,.36,1)",
                     }}
                   >
-                    <div>
-                      <div className="mb-[18px] flex items-center gap-3">
-                        {s.featured && (
-                          <span className="rounded-[5px] bg-gold px-[9px] py-[5px] font-mono text-[9.5px] font-semibold uppercase tracking-[1.6px] text-navy">
-                            Destaque
+                    <div className="mb-[18px] flex items-center justify-center gap-3">
+                      {s.featured && (
+                        <span className="rounded-[5px] bg-gold px-[9px] py-[5px] font-mono text-[9.5px] font-semibold uppercase tracking-[1.6px] text-navy">
+                          Destaque
+                        </span>
+                      )}
+                      <span className="font-mono text-[11px] uppercase tracking-[2px] text-gold">{s.cat}</span>
+                    </div>
+                    <h3 className="m-0 mb-[16px] font-serif text-[32px] font-semibold leading-[1.12] text-white sm:text-[38px]">
+                      {s.title}
+                    </h3>
+                    <p className="m-0 mb-[28px] max-w-[600px] text-[16px] leading-[1.62] text-white/[.72]">{s.desc}</p>
+
+                    {/* fundamentos legais */}
+                    <div className="mb-[30px] grid w-full max-w-[640px] gap-[10px] text-left sm:grid-cols-1">
+                      {s.points.map((p) => (
+                        <div
+                          key={p}
+                          className="flex items-start gap-[11px] rounded-[10px] border border-[rgba(201,168,106,.16)] bg-[rgba(201,168,106,.05)] px-[14px] py-[11px]"
+                        >
+                          <span className="mt-px flex h-[21px] w-[21px] shrink-0 items-center justify-center rounded-full border border-[rgba(201,168,106,.45)] bg-[rgba(201,168,106,.16)] text-[11px] text-gold">
+                            ✓
                           </span>
-                        )}
-                        <span className="font-mono text-[11px] uppercase tracking-[2px] text-gold">{s.cat}</span>
-                      </div>
-                      <h3 className="m-0 mb-[14px] font-serif text-[34px] font-semibold leading-[1.12] text-white">
-                        {s.title}
-                      </h3>
-                      <p className="m-0 mb-[22px] max-w-[520px] text-[16px] leading-[1.62] text-white/[.72]">{s.desc}</p>
-                      <div className="mb-7 flex flex-col gap-[11px]">
-                        {s.points.map((p) => (
-                          <div key={p} className="flex items-start gap-[11px]">
-                            <span className="mt-px flex h-[21px] w-[21px] shrink-0 items-center justify-center rounded-full border border-[rgba(201,168,106,.45)] bg-[rgba(201,168,106,.16)] text-[11px] text-gold">
-                              ✓
-                            </span>
-                            <span className="text-[14.5px] leading-[1.5] text-white/[.82]">{p}</span>
-                          </div>
-                        ))}
-                      </div>
-                      <button
-                        onClick={() => ask(s.ask)}
-                        className="inline-flex cursor-pointer items-center gap-[9px] rounded-[9px] border border-gold px-[22px] py-[13px] text-[14px] font-semibold text-gold transition-[transform,background,color] duration-200 ease-out hover:-translate-y-0.5 hover:scale-[1.02] hover:bg-gold hover:text-navy"
-                      >
-                        Perguntar à DAP.IA <span className="text-[16px]">→</span>
-                      </button>
+                          <span className="text-[14.5px] leading-[1.5] text-white/[.82]">{p}</span>
+                        </div>
+                      ))}
                     </div>
 
-                    {/* reference card */}
-                    <div className="flex justify-center">
-                      <div
-                        className="relative aspect-[.82] w-full max-w-[300px] animate-float overflow-hidden rounded-[18px] border border-[rgba(201,168,106,.28)] shadow-[0_26px_60px_rgba(6,15,23,.5)]"
-                        style={{ background: "linear-gradient(160deg,#0a1924,#060f17)" }}
-                      >
-                        <div className="absolute left-0 right-0 top-0 h-[3px] bg-[linear-gradient(90deg,transparent,#c9a86a,transparent)]" />
-                        <div className="relative flex h-full flex-col justify-between p-[26px_24px]">
-                          <div className="font-mono text-[9.5px] uppercase tracking-[2px] text-[rgba(201,168,106,.85)]">
-                            Base legal
-                          </div>
-                          <div className="text-center">
-                            <div className="font-serif text-[74px] font-bold leading-[.9] text-gold">{s.emblem}</div>
-                            <div className="mt-2 font-mono text-[10px] uppercase tracking-[1.5px] text-white/50">
-                              {s.refCap}
-                            </div>
-                          </div>
-                          <div className="flex flex-wrap justify-center gap-[6px]">
-                            {s.refs.map((r) => (
-                              <span
-                                key={r}
-                                className="rounded-md border border-[rgba(201,168,106,.32)] px-2 py-1 font-mono text-[10px] text-gold"
-                              >
-                                {r}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
+                    {/* referências legais (chips) */}
+                    <div className="mb-[26px] flex flex-wrap items-center justify-center gap-[6px]">
+                      {s.refs.map((r) => (
+                        <span
+                          key={r}
+                          className="rounded-md border border-[rgba(201,168,106,.32)] px-[9px] py-[5px] font-mono text-[10px] uppercase tracking-[.5px] text-gold"
+                        >
+                          {r}
+                        </span>
+                      ))}
                     </div>
+
+                    <button
+                      onClick={() => ask(s.ask)}
+                      className="inline-flex cursor-pointer items-center gap-[9px] rounded-[9px] border border-gold px-[22px] py-[13px] text-[14px] font-semibold text-gold transition-[transform,background,color] duration-200 ease-out hover:-translate-y-0.5 hover:scale-[1.02] hover:bg-gold hover:text-navy"
+                    >
+                      Consultar a DAP.IA sobre este tema <span className="text-[16px]">→</span>
+                    </button>
                   </div>
                 </div>
               );
@@ -187,6 +171,11 @@ export default function DireitosCarousel() {
 
         {/* progress + dots */}
         <div className="mt-[26px] flex items-center gap-5">
+          <span className="shrink-0 font-mono text-[12px] tracking-[1px] text-navy/60">
+            <span className="text-navy">{String(slide + 1).padStart(2, "0")}</span>
+            {" / "}
+            {String(SLIDES.length).padStart(2, "0")}
+          </span>
           <div className="h-[3px] flex-1 overflow-hidden rounded-full bg-navy/10">
             <div
               className="h-full rounded-full bg-[linear-gradient(90deg,#9c7b3f,#c9a86a)] transition-[width] duration-100 ease-linear"
@@ -198,7 +187,7 @@ export default function DireitosCarousel() {
               <button
                 key={i}
                 onClick={() => go(i)}
-                aria-label={`Slide ${i + 1}`}
+                aria-label={`Ir para a área ${i + 1}`}
                 className="h-[9px] cursor-pointer rounded-full p-0 transition-[width,background] duration-300 ease-out"
                 style={{ width: i === slide ? 30 : 9, background: i === slide ? "#c9a86a" : "rgba(6,15,23,.18)" }}
               />
