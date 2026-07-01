@@ -8,10 +8,50 @@
 //
 // O histórico é limitado para economizar tokens de contexto (CLAUDE.md).
 
+import {
+  RATE_LIMIT_COOKIE,
+  MAX_QUESTIONS,
+  WINDOW_MS,
+  getClientIp,
+  readState,
+  buildSetCookie,
+} from "@/lib/rate-limit";
+
 const MAX_HISTORY = 12; // últimas N mensagens enviadas ao RAG
 const TIMEOUT_MS = 20000;
 
 export async function POST(req) {
+  // ---- rate-limit por IP: 4 perguntas / 24h (cookie assinado) ----
+  const ip = getClientIp(req);
+  const now = Date.now();
+  const rawCookie = readCookie(req, RATE_LIMIT_COOKIE);
+  const state = readState(rawCookie, ip, now);
+
+  if (state.count >= MAX_QUESTIONS) {
+    const retryMs = state.windowStart + WINDOW_MS - now;
+    const horas = Math.max(1, Math.ceil(retryMs / (60 * 60 * 1000)));
+    return Response.json(
+      {
+        reply: `Você atingiu o limite de ${MAX_QUESTIONS} perguntas nas últimas 24 horas. Para continuar, um de nossos advogados pode falar diretamente com você — tente novamente em cerca de ${horas} hora(s).`,
+        sources: [],
+        rateLimited: true,
+        retryAfterMs: retryMs,
+      },
+      {
+        status: 429,
+        headers: { "Retry-After": String(Math.ceil(retryMs / 1000)) },
+      }
+    );
+  }
+
+  // consome uma pergunta desta janela e persiste no cookie assinado
+  const nextState = { count: state.count + 1, windowStart: state.windowStart };
+  const setCookie = buildSetCookie(nextState, ip);
+  const withCookie = (resp) => {
+    resp.headers.append("Set-Cookie", setCookie);
+    return resp;
+  };
+
   try {
     const { message, history, sessionId } = await req.json();
     const apiUrl = process.env.RAG_API_URL || "http://localhost:8000/webhook/chat-ia";
@@ -62,11 +102,15 @@ export async function POST(req) {
     // meta pode vir em data.meta (preferido) ou solto na raiz (compat).
     const meta = data.meta ?? extractLooseMeta(data);
 
-    return Response.json({
-      reply: data.resposta ?? data.reply ?? data.answer ?? data.text ?? data.response ?? "",
-      sources: data.sources ?? data.fontes ?? [],
-      ...(meta ? { meta } : {}),
-    });
+    // sucesso: consome a cota (seta o cookie com a contagem incrementada)
+    return withCookie(
+      Response.json({
+        reply: data.resposta ?? data.reply ?? data.answer ?? data.text ?? data.response ?? "",
+        sources: data.sources ?? data.fontes ?? [],
+        ...(meta ? { meta } : {}),
+        remaining: Math.max(0, MAX_QUESTIONS - nextState.count),
+      })
+    );
   } catch (error) {
     // Diagnóstico explícito da causa (aparece no terminal do `next dev`):
     const apiUrl = process.env.RAG_API_URL || "http://localhost:8000/webhook/chat-ia";
@@ -80,12 +124,26 @@ export async function POST(req) {
     } else {
       console.error("[api/chat] erro ao comunicar com a API RAG:", error);
     }
+    // falha do nosso lado (RAG fora/timeout): NÃO consome a cota do usuário
+    // (não seta o cookie), para não penalizar por um erro do servidor.
     return Response.json({
       reply:
         "Desculpe, não consegui obter resposta do assistente no momento. Por favor, tente novamente mais tarde.",
       sources: [],
     });
   }
+}
+
+/** Lê um cookie específico do header Cookie da requisição. */
+function readCookie(req, name) {
+  const header = req.headers.get("cookie");
+  if (!header) return undefined;
+  for (const part of header.split(";")) {
+    const eq = part.indexOf("=");
+    if (eq < 0) continue;
+    if (part.slice(0, eq).trim() === name) return part.slice(eq + 1).trim();
+  }
+  return undefined;
 }
 
 // Coleta campos de meta que alguns backends devolvem soltos na raiz da resposta.

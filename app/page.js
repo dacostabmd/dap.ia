@@ -12,10 +12,11 @@ export default function Home() {
       {/* padding-bottom no mobile p/ não ser coberto pela barra fixa (item 9) */}
       <main className="overflow-x-hidden pb-[72px] md:pb-0">
         <Hero />
-        <DireitosCarousel />
-        <Areas />
         <Confianca />
-        <CTA />
+
+        <DireitosCarousel />
+
+        <Areas />
         <Footer />
       </main>
       <MobileCTA />

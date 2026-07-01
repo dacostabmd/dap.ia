@@ -7,10 +7,11 @@ vi.mock("@/lib/bitrix", () => ({
   addTimelineComment: vi.fn(async () => ({ result: "cmt-1" })),
   addActivity: vi.fn(async () => ({ result: "act-1" })),
   postLeadToFeed: vi.fn(async () => ({ result: "post-1" })),
+  moveDealStage: vi.fn(async () => ({ result: true })),
 }));
 
 // Mantém o flag de "configurado" estável nos testes.
-vi.mock("@/lib/bitrix-config", () => ({ isBitrixConfigured: false }));
+vi.mock("@/lib/bitrix-config", () => ({ isBitrixConfigured: false, SCHEDULE_STAGE_ID: "C600:PREPAYMENT_INVOI" }));
 
 import { POST } from "@/app/api/bitrix/route";
 import * as bitrix from "@/lib/bitrix";
@@ -106,6 +107,9 @@ describe("POST /api/bitrix — update", () => {
 
 describe("POST /api/bitrix — schedule", () => {
   it("cria atividade e publica no feed", async () => {
+    // datas no FUTURO (a rota rejeita horários passados)
+    const start = new Date(Date.now() + 2 * 60 * 60 * 1000); // +2h
+    const end = new Date(start.getTime() + 30 * 60 * 1000);
     const res = await POST(
       makeReq({
         action: "schedule",
@@ -113,8 +117,8 @@ describe("POST /api/bitrix — schedule", () => {
         nome: "João Silva",
         tipoCaso: "Busca e Apreensão",
         urgencia: "alta",
-        startIso: "2026-07-01T14:00:00-03:00",
-        endIso: "2026-07-01T14:30:00-03:00",
+        startIso: start.toISOString(),
+        endIso: end.toISOString(),
         label: "amanhã 14h",
       })
     );
@@ -127,10 +131,31 @@ describe("POST /api/bitrix — schedule", () => {
     expect(bitrix.postLeadToFeed).toHaveBeenCalledWith(
       expect.objectContaining({ nome: "João Silva", urgencia: "alta", dealId: "deal-42" })
     );
+    // move o card para a etapa de agendamento
+    expect(bitrix.moveDealStage).toHaveBeenCalledWith("deal-42", "C600:PREPAYMENT_INVOI");
   });
 
   it("exige startIso/endIso", async () => {
     const res = await POST(makeReq({ action: "schedule", dealId: "deal-42" }));
+    expect(res.status).toBe(400);
+    expect(bitrix.addActivity).not.toHaveBeenCalled();
+  });
+
+  it("rejeita horário no passado", async () => {
+    const start = new Date(Date.now() - 2 * 60 * 60 * 1000); // 2h atrás
+    const end = new Date(start.getTime() + 30 * 60 * 1000);
+    const res = await POST(
+      makeReq({ action: "schedule", dealId: "deal-42", startIso: start.toISOString(), endIso: end.toISOString() })
+    );
+    expect(res.status).toBe(400);
+    expect(bitrix.addActivity).not.toHaveBeenCalled();
+  });
+
+  it("rejeita fim <= início", async () => {
+    const start = new Date(Date.now() + 2 * 60 * 60 * 1000);
+    const res = await POST(
+      makeReq({ action: "schedule", dealId: "deal-42", startIso: start.toISOString(), endIso: start.toISOString() })
+    );
     expect(res.status).toBe(400);
     expect(bitrix.addActivity).not.toHaveBeenCalled();
   });

@@ -1,19 +1,15 @@
+import Image from "next/image";
 import Reveal from "@/components/Reveal";
 import { DIFERENCIAIS } from "@/lib/data";
 import Grainient from "@/components/Grainient";
+import drBruno from "@/app/assets/dr_bruno.png";
 
 const STATS = [
-  { n: "17+", l: "anos de experiência" },
+  { n: "18+", l: "anos de experiência" },
   { n: "12", l: "estados no país" },
   { n: "800+", l: "colaboradores" },
 ];
 
-const SEALS = [
-  { src: "https://dapadvocacia.com.br/wp-content/uploads/2024/11/selo-member-1024x577.png", alt: "Selo de membro" },
-  { src: "https://dapadvocacia.com.br/wp-content/uploads/2024/11/law-awards-2026.png", alt: "Law Awards 2026" },
-  { src: "https://dapadvocacia.com.br/wp-content/uploads/2024/11/reclame-aqui-selo-1024x356.png", alt: "Reclame Aqui" },
-  { src: "https://dapadvocacia.com.br/wp-content/uploads/2024/11/certificadora1000-1024x509.png", alt: "Certificadora" },
-];
 
 export default function Confianca() {
   return (
@@ -35,45 +31,36 @@ export default function Confianca() {
           zoom={0.92}
           blendAngle={10.0}
         />
-        <div className="relative z-10 grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
-          <div>
-            <span className="font-mono text-[11px] uppercase tracking-[2.6px] text-gold">Por que confiar</span>
+        <div className="relative z-10 flex flex-col items-center gap-8 lg:flex-row lg:items-center lg:gap-12">
+          <div className="flex-1">
+            <span className="font-mono text-[18px] uppercase tracking-[2.6px] text-gold">Inovação na área LegalTech</span>
             <h2 className="m-0 mb-4 mt-[14px] font-serif text-[32px] font-semibold leading-[1.2] text-white">
-              Um escritório consolidado, agora com a velocidade da IA.
+              18 anos de advocacia. Agora, também nos seus primeiros segundos.
             </h2>
-            <p className="m-0 mb-7 text-[15.5px] leading-[1.65] text-white/70">
-              Parte do <strong className="font-semibold text-white">Grupo Durão</strong> — rede jurídica de alta
-              performance presente em 12 estados. A DAP.IA é o primeiro atendimento: rápido, disponível 24h e
-              transparente sobre suas fontes. Quando o caso exige, um advogado humano assume.
+            <p className="m-0 max-w-[640px] text-[22px] leading-[1.65] text-white/70">
+              Parte do Grupo Durão — rede jurídica presente em 12 estados. Criamos a   <span className="text-[22px] text-gold">DAP.IA</span>,
+              nossa recepcionista digital: ela <span className="text-[22px] text-gold">ouve</span> seu caso, <span className="text-[22px] text-gold">explica</span> seus direitos e já te
+              <span className="text-[22px] text-gold"> conecta</span> com o advogado certo — <span className="text-[22px] text-gold">24 horas por dia</span>, com total transparência sobre
+              as fontes que usa. Quando o caso pede profundidade, um advogado humano assume
+              a partir daí.
             </p>
-            <div className="grid grid-cols-3 gap-5">
-              {STATS.map((s) => (
-                <div key={s.l}>
-                  <div className="font-serif text-[34px] font-bold leading-none text-gold">{s.n}</div>
-                  <div className="mt-[6px] text-[12px] text-white/60">{s.l}</div>
-                </div>
-              ))}
-            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-[14px]">
-            {SEALS.map((s) => (
-              <div
-                key={s.alt}
-                className="flex aspect-[1.4] cursor-pointer items-center justify-center rounded-[12px] border border-[rgba(201,168,106,.22)] bg-porcelain-grain p-[18px] transition-[transform,box-shadow,border-color] duration-200 ease-out hover:-translate-y-[4px] hover:border-gold hover:shadow-[0_12px_28px_rgba(201,168,106,.18)]"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={s.src} alt={s.alt} className="max-h-full max-w-full object-contain" />
-              </div>
-            ))}
+          <div className="shrink-0 lg:w-[300px]">
+            <Image
+              src={drBruno}
+              alt="Ilustração do Dr. Bruno, advogado do Grupo Durão"
+              className="w-full max-w-[240px] lg:max-w-full"
+            />
           </div>
         </div>
 
-        <div className="relative z-10 mt-[42px] grid grid-cols-2 gap-6 border-t border-white/10 pt-[34px] md:grid-cols-4">
-          {DIFERENCIAIS.map((d) => (
-            <div key={d.t}>
-              <div className="mb-[6px] font-serif text-[16px] font-semibold text-white">{d.t}</div>
-              <div className="text-[12.5px] leading-[1.55] text-white/60">{d.d}</div>
+        <div className="relative z-10 mt-[42px] flex flex-wrap items-center gap-x-[28px] gap-y-[14px] border-t border-white/10 pt-[34px]">
+          {DIFERENCIAIS.map((d, i) => (
+            <div key={d.t} className="flex items-center gap-[10px]">
+              {i > 0 && <span className="hidden h-[14px] w-px bg-white/20 sm:block" aria-hidden="true" />}
+              <span className="text-[15px] text-gold">✦</span>
+              <span className="text-[13.5px] font-semibold text-white">{d.t}</span>
             </div>
           ))}
         </div>

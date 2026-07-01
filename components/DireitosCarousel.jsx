@@ -49,8 +49,8 @@ export default function DireitosCarousel() {
         <div className="mb-[34px] flex flex-wrap items-end justify-between gap-7">
           <div className="max-w-[640px]">
             <span className="font-mono text-[11px] uppercase tracking-[2.6px] text-gold">Conheça seus direitos</span>
-            <h2 className="m-0 mt-[14px] font-serif text-[40px] font-semibold leading-[1.12] tracking-[-.5px] text-navy">
-              Você tem mais direitos do que imagina
+            <h2 className="m-0 mt-[14px] font-serif text-[40px] font-semibold leading-[1.12] tracking-[-.5px]  text-navy">
+              Você pode estar pagando por algo que a lei não permite
             </h2>
             <p className="m-0 mt-[14px] text-[16px] leading-[1.6] text-[#5c6b76]">
               Da <strong className="font-semibold text-navy">busca e apreensão</strong> do seu veículo aos{" "}
@@ -58,7 +58,7 @@ export default function DireitosCarousel() {
               e pergunte à DAP.IA.
             </p>
           </div>
-          <div className="flex gap-[10px]">
+          <div className="flex w-full justify-center gap-6 sm:w-auto sm:justify-end sm:gap-[10px]">
             <button
               onClick={() => go(slide - 1)}
               aria-label="Anterior"

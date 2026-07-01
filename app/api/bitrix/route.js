@@ -19,8 +19,9 @@ import {
   addTimelineComment,
   addActivity,
   postLeadToFeed,
+  moveDealStage,
 } from "@/lib/bitrix";
-import { isBitrixConfigured } from "@/lib/bitrix-config";
+import { isBitrixConfigured, SCHEDULE_STAGE_ID } from "@/lib/bitrix-config";
 import { isValidBRPhone, normalizeBRPhone, isValidEmail, isValidName } from "@/lib/validation";
 
 function bad(message, status = 400) {
@@ -59,7 +60,7 @@ export async function POST(req) {
   try {
     // ---------- CREATE ----------
     if (action === "create") {
-      const { nome, telefone, email, tipoCaso, urgencia, historico, origemVoz } = body;
+      const { nome, telefone, email, tipoCaso, urgencia, historico, origemVoz, infoExtra } = body;
 
       if (!isValidName(nome)) return bad("Nome inválido.");
       if (!isValidBRPhone(telefone)) return bad("Telefone inválido. Use um número brasileiro válido.");
@@ -78,7 +79,11 @@ export async function POST(req) {
         etapaConversa: "Diagnóstico / contato capturado",
       });
 
-      const comentario = historicoParaComentario(historico, houveVoz);
+      const historicoComentario = historicoParaComentario(historico, houveVoz);
+      const extra = (infoExtra || "").trim();
+      const blocoExtra = extra ? `📌 Informações extras enviadas pelo cliente:\n${extra}` : "";
+      // junta o bloco de informações extras acima do histórico da conversa
+      const comentario = [blocoExtra, historicoComentario].filter(Boolean).join("\n\n");
       if (dealId && comentario) {
         // não falha a criação se o comentário der erro
         await addTimelineComment(dealId, comentario).catch((e) =>
@@ -122,14 +127,36 @@ export async function POST(req) {
       if (!dealId) return bad("dealId é obrigatório para agendamento.");
       if (!startIso || !endIso) return bad("startIso e endIso são obrigatórios.");
 
-      const subject = `Atendimento DAP.IA — ${nome || "Lead"}${tipoCaso ? ` (${tipoCaso})` : ""}`;
+      const startMs = Date.parse(startIso);
+      const endMs = Date.parse(endIso);
+      if (Number.isNaN(startMs) || Number.isNaN(endMs)) {
+        return bad("startIso e endIso devem ser datas ISO válidas.");
+      }
+      // tolerância de 1 min para diferença de relógio entre client e servidor
+      const CLOCK_SKEW_MS = 60 * 1000;
+      if (startMs < Date.now() - CLOCK_SKEW_MS) {
+        return bad("Não é possível agendar para um horário no passado.");
+      }
+      if (endMs <= startMs) {
+        return bad("O horário de término deve ser posterior ao de início.");
+      }
+
+      const subject = `Teleconferência DAP.IA — ${nome || "Lead"}${tipoCaso ? ` (${tipoCaso})` : ""}`;
+      // criar a atividade não deve derrubar o agendamento: o essencial é mover o card
       await addActivity({
         dealId,
         subject,
         startIso,
         endIso,
-        description: `Horário escolhido pelo lead no chat: ${label || startIso}.`,
-      });
+        description: `Reunião remota (teleconferência) agendada pelo lead no chat. Horário escolhido: ${label || startIso}.`,
+      }).catch((e) => console.error("[bitrix] criar atividade (schedule) falhou (segue):", e.message));
+
+      // move o card para a etapa de agendamento (não falha o fluxo se der erro)
+      if (SCHEDULE_STAGE_ID) {
+        await moveDealStage(dealId, SCHEDULE_STAGE_ID).catch((e) =>
+          console.error("[bitrix] mover etapa (schedule) falhou (segue):", e.message)
+        );
+      }
 
       // feed da empresa: "A DAP.IA captou um lead"
       await postLeadToFeed({ nome, tipoCaso, urgencia, origemVoz, dealId }).catch((e) =>

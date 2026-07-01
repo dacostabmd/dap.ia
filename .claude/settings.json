@@ -9,10 +9,32 @@
       "PowerShell(npm test 2>&1)",
       "PowerShell(npm run build 2>&1)",
       "PowerShell(npm run lint 2>&1)",
-      "PowerShell(Get-Process -Name node -ErrorAction SilentlyContinue)"
+      "PowerShell(Get-Process -Name node -ErrorAction SilentlyContinue)",
+      "WebFetch(domain:github.com)",
+      "Bash(gh api *)",
+      "PowerShell($r = Invoke-RestMethod -Uri \"https://api.github.com/repos/caio-dcc/la-poison/git/trees/main?recursive=1\" -Headers @{ \"User-Agent\" = \"claude\" }; $r.tree.path | Where-Object { $_ -match \"chat|message|bubble|conversation|typing|Chat|Message\" })",
+      "PowerShell($repo = Invoke-RestMethod -Uri \"https://api.github.com/repos/caio-dcc/la-poison\" -Headers @{ \"User-Agent\" = \"claude\" }; \"default_branch: $\\($repo.default_branch\\)\")",
+      "PowerShell($r = Invoke-RestMethod -Uri \"https://api.github.com/repos/caio-dcc/la-poison/git/trees/master?recursive=1\" -Headers @{ \"User-Agent\" = \"claude\" }; $r.tree.path | Where-Object { $_ -match \"\\(?i\\)chat|message|bubble|conversation|typing\" })",
+      "PowerShell($c = Invoke-RestMethod -Uri \"https://raw.githubusercontent.com/caio-dcc/la-poison/master/src/components/chatbot/ChatbotInterface.tsx\" -Headers @{ \"User-Agent\" = \"claude\" }; $c | Out-File -FilePath \"$env:TEMP\\\\ChatbotInterface.tsx\" -Encoding utf8; \"lines: $\\(\\( $c -split \"`n\"\\).Count\\)\")",
+      "Read(//c/Users/caio.marques/AppData/Local/Temp/**)",
+      "PowerShell(npm install framer-motion)",
+      "PowerShell(npm run lint)",
+      "PowerShell(npx next lint --dir app --dir lib --file app/api/bitrix/route.js 2>&1)",
+      "PowerShell(& node ./node_modules/next/dist/bin/next lint 2>&1)",
+      "PowerShell(git ls-files --error-unmatch .env 2>&1; Write-Output \"---exit:$LASTEXITCODE---\")",
+      "PowerShell($env:PORT=\"3100\"; npm run start)",
+      "Bash(node /tmp/e2e-bitrix.mjs)",
+      "Bash(rm -f /tmp/probe-bitrix.mjs /tmp/e2e-bitrix.mjs && echo \"limpo\")",
+      "PowerShell($env:TZ=\"Europe/Moscow\"; node /tmp/tz-test.mjs; Write-Output \"----\"; $env:TZ=\"Asia/Tokyo\"; node /tmp/tz-test.mjs)",
+      "PowerShell($p=\"C:\\\\Users\\\\CAIO~1.MAR\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Projetos-dap-ia-chatbot\\\\5e6616c6-cc34-4650-8ca3-23055a5c09b7\\\\scratchpad\\\\tz-test.mjs\"; Write-Output \"=== Navegador em Moscou \\(UTC+3\\) ===\"; $env:TZ=\"Europe/Moscow\"; node $p; Write-Output \"\"; Write-Output \"=== Navegador em Tóquio \\(UTC+9\\) ===\"; $env:TZ=\"Asia/Tokyo\"; node $p)",
+      "PowerShell(npx vitest run __tests__/rate-limit.test.js 2>&1)",
+      "PowerShell(npx vitest run 2>&1)",
+      "PowerShell(npx vitest run __tests__/bitrix-route.test.js -t \"cria atividade\" --reporter=verbose 2>&1)",
+      "Bash(git check-ignore *)"
     ],
     "additionalDirectories": [
-      "c:\\Projetos\\dap.ia_chatbot\\lib"
+      "c:\\Projetos\\dap.ia_chatbot\\lib",
+      "\\tmp"
     ]
   }
 }
